@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sổ Quản Lý VPP - Bệnh viện Trường Đại Học Trà Vinh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        .tab-active {
+            border-bottom: 2px solid #3b82f6;
+            color: #3b82f6;
+            font-weight: bold;
+            background-color: #eff6ff;
+        }
+
+        .tab-inactive {
+            color: #6b7280;
+        }
+
+        .dynamic-col {
+            border-top: 2px solid #3b82f6;
+            background-color: #eff6ff;
+        }
+
+        @keyframes spin-slow {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .syncing-icon {
+            animation: spin-slow 1.5s linear infinite;
+            display: inline-block;
+        }
+
+        /* Tùy chỉnh thanh cuộn cho bảng */
+        ::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-sans text-gray-800">
+
+    <!-- LOADING OVERLAY -->
+    <div id="loading-overlay"
+        class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center hidden z-[100] backdrop-blur-sm">
+        <div class="bg-white p-6 rounded-xl flex flex-col items-center space-y-3 shadow-2xl">
+            <i class="fas fa-circle-notch fa-spin text-blue-600 text-4xl"></i>
+            <span id="loading-text" class="text-gray-800 font-bold text-lg">Đang xử lý...</span>
+        </div>
+    </div>
+
+    <!-- MODAL SỬA TÀI KHOẢN (ADMIN) -->
+    <div id="modal-edit-account"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-2xl">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2"><i
+                    class="fas fa-user-edit text-blue-500 mr-2"></i>Sửa Tài Khoản</h2>
+            <form id="form-edit-acc" onsubmit="submitEditAccount(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Tài khoản (Không đổi)</label>
+                    <input type="text" id="editAccUser" disabled
+                        class="mt-1 block w-full p-2 border rounded bg-gray-100 cursor-not-allowed">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Tên người đại diện</label>
+                    <input type="text" id="editAccName" required
+                        class="mt-1 block w-full p-2 border rounded focus:ring-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Khoa/Phòng</label>
+                    <input type="text" id="editAccDept" required
+                        class="mt-1 block w-full p-2 border rounded focus:ring-blue-500">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700">Mật khẩu mới (Bỏ trống nếu giữ
+                        nguyên)</label>
+                    <input type="password" id="editAccPass"
+                        class="mt-1 block w-full p-2 border rounded focus:ring-blue-500">
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeEditAccountModal()"
+                        class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Hủy</button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Lưu Thay
+                        Đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL CẤU HÌNH VƯỢT KẾ HOẠCH -->
+    <div id="modal-vuot-ke-hoach"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800"><i class="fas fa-chart-line text-blue-500 mr-2"></i>Cấu Hình
+                    % Vượt Kế Hoạch Năm</h2>
+                <button onclick="closeVuotKeHoachModal()"
+                    class="text-gray-500 hover:text-red-500 text-2xl font-bold">&times;</button>
+            </div>
+            <div class="overflow-y-auto flex-1 border rounded shadow-inner mb-4">
+                <table class="min-w-full bg-white text-sm">
+                    <thead class="bg-gray-100 sticky top-0">
+                        <tr>
+                            <th class="py-2 px-4 border-b text-left">Tên VPP</th>
+                            <th class="py-2 px-4 border-b text-center">KH Gốc</th>
+                            <th class="py-2 px-4 border-b text-center text-blue-600">% Vượt Mới</th>
+                            <th class="py-2 px-4 border-b text-center font-bold">Tổng Được Phép Mới</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vuot-ke-hoach-tbody"></tbody>
+                </table>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeVuotKeHoachModal()"
+                    class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Hủy bỏ</button>
+                <button onclick="saveVuotKeHoach()"
+                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold shadow">Áp dụng thay
+                    đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL HỦY CHỐT THẦU (ADMIN) -->
+    <div id="modal-huy-chot"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-2xl">
+            <h2 class="text-xl font-bold text-red-600 mb-4 border-b pb-2"><i class="fas fa-undo-alt mr-2"></i>Hủy Chốt
+                Thầu (Admin)</h2>
+            <p class="text-sm text-gray-600 mb-4">Chọn Khoa/Phòng để khôi phục dữ liệu về thời điểm trước lần chốt gần
+                nhất của riêng khoa đó.</p>
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Chọn Khoa/Phòng</label>
+                <select id="huyChotDept" class="w-full p-2 border rounded focus:ring-red-500 bg-gray-50">
+                    <!-- JS populate -->
+                </select>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeHuyChotModal()"
+                    class="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100">Hủy</button>
+                <button type="button" onclick="submitHuyChot()"
+                    class="px-4 py-2 bg-red-600 text-white rounded font-bold hover:bg-red-700 shadow transition">Xác
+                    Nhận Hủy</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-container" class="min-h-screen flex items-center justify-center bg-gray-100">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md border-t-4 border-blue-600">
+            <div class="text-center mb-6 flex flex-col items-center">
+                <img src="logotvu.png" alt="Logo TVU" class="h-20 w-auto mb-3"
+                    onerror="this.src='https://via.placeholder.com/100x100?text=TVU+Logo'">
+                <h2 class="text-2xl font-bold text-gray-800">Bệnh viện Trường ĐH Trà Vinh</h2>
+                <p class="text-sm text-gray-500">Sổ tay Quản Lý Văn Phòng Phẩm</p>
+            </div>
+            <form id="form-login" onsubmit="handleLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Tài khoản</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-user text-gray-400"></i>
+                        </div>
+                        <input type="text" id="loginUser" required
+                            class="block w-full pl-10 p-2.5 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700">Mật khẩu</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-400"></i>
+                        </div>
+                        <input type="password" id="loginPass" required
+                            class="block w-full pl-10 p-2.5 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+                <div id="login-error"
+                    class="hidden mb-4 text-sm text-red-600 bg-red-50 p-3 rounded border border-red-200"></div>
+                <button type="submit"
+                    class="w-full bg-blue-600 text-white p-2.5 rounded-md hover:bg-blue-700 font-bold transition-colors">Đăng
+                    Nhập</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app-container" class="max-w-[1400px] mx-auto p-2 sm:p-4 hidden">
+        <!-- Header -->
+        <div
+            class="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-4">
+                <img src="logotvu.png" alt="Logo TVU" class="h-14 w-auto"
+                    onerror="this.src='https://via.placeholder.com/60x60?text=TVU'">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Sổ Tay Quản lý văn phòng phẩm </h1>
+                    <p class="text-xs sm:text-sm text-gray-500 mt-1">Bệnh viện Trường Đại Học Trà Vinh</p>
+                </div>
+            </div>
+            <div
+                class="flex items-center space-x-4 sm:border-l pl-4 border-gray-200 w-full sm:w-auto justify-between sm:justify-end">
+                <div class="text-right">
+                    <span class="text-sm font-semibold text-gray-700">Người dùng:</span>
+                    <span id="header-user-name" class="text-sm text-blue-600 font-bold ml-1">...</span><br>
+                    <span id="header-user-dept" class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">...</span>
+                </div>
+                <div class="flex flex-col space-y-2">
+                    <button id="btn-sync" onclick="forceSync()"
+                        class="text-xs text-blue-600 hover:text-blue-800 font-bold bg-blue-50 px-2 py-1 rounded transition">
+                        <i class="fas fa-sync-alt" id="icon-sync"></i> <span id="text-sync">Đồng bộ</span>
+                    </button>
+                    <button onclick="logout()"
+                        class="text-xs text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded font-bold transition">
+                        <i class="fas fa-sign-out-alt"></i> Thoát
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-white shadow-sm rounded-lg mb-6 flex overflow-x-auto border-b">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard"
+                class="px-5 py-4 tab-active whitespace-nowrap transition"><i class="fas fa-chart-pie mr-2"></i>Tồn Kho &
+                Chốt Thầu</button>
+            <button onclick="switchTab('nhap')" id="tab-nhap"
+                class="px-5 py-4 tab-inactive whitespace-nowrap transition"><i class="fas fa-box-open mr-2"></i>Kế Hoạch
+                & Lãnh VPP</button>
+            <button onclick="switchTab('xuat')" id="tab-xuat"
+                class="px-5 py-4 tab-inactive whitespace-nowrap transition"><i class="fas fa-hand-holding mr-2"></i>Sử
+                Dụng (Xuất)</button>
+            <button onclick="switchTab('baocao')" id="tab-baocao"
+                class="px-5 py-4 tab-inactive whitespace-nowrap transition"><i class="fas fa-file-alt mr-2"></i>Báo
+                Cáo</button>
+            <button onclick="switchTab('taikhoan')" id="tab-taikhoan"
+                class="px-5 py-4 tab-inactive whitespace-nowrap transition"><i class="fas fa-user-cog mr-2"></i>Tài
+                Khoản</button>
+        </div>
+
+        <!-- TAB: DASHBOARD (TỒN KHO) -->
+        <div id="view-dashboard" class="view-section">
+            <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+                <!-- Toolbar -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            Bảng Tồn Kho Trực Tuyến
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-1 italic">Các cột Gói - Đợt tự động mở rộng. Nhấn "Chốt thầu"
+                            để dồn tồn kho sang kỳ mới.</p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 items-center w-full md:w-auto">
+                        <div class="relative flex-1 md:w-48">
+                            <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                            <input type="text" id="searchItem" placeholder="Tìm VPP..."
+                                class="pl-9 pr-3 py-2 border rounded-md shadow-sm w-full text-sm"
+                                onkeyup="updateDashboard()">
+                        </div>
+                        <!-- Nút Chốt Thầu (Khoa) & Hủy Chốt (Admin) -->
+                        <button id="btn-action-chot" onclick="confirmChotThau()"
+                            class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 font-bold shadow-sm text-sm transition"><i
+                                class="fas fa-lock mr-2"></i>Chốt Thầu Khoa</button>
+                        <button id="btn-action-huy-chot" onclick="confirmHuyChotThau()"
+                            class="hidden bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 font-bold shadow-sm text-sm transition"><i
+                                class="fas fa-undo-alt mr-2"></i>Hủy Chốt Theo Khoa</button>
+                        <button onclick="exportDashboardToExcel()"
+                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 font-bold shadow-sm text-sm whitespace-nowrap transition"><i
+                                class="fas fa-file-excel mr-2"></i>Xuất Excel</button>
+                    </div>
+                </div>
+
+                <!-- Bảng Data -->
+                <div class="overflow-x-auto max-h-[65vh] border rounded-lg">
+                    <table id="inventory-table" class="min-w-full bg-white border-collapse whitespace-nowrap text-sm">
+                        <thead class="bg-gray-50 sticky top-0 z-10 shadow-sm" id="dashboard-thead">
+                            <!-- Render by JS -->
+                        </thead>
+                        <tbody id="inventory-tbody" class="divide-y divide-gray-200">
+                            <!-- Render by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: NHẬP VPP -->
+        <div id="view-nhap" class="view-section hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <!-- Phần 1: Khai báo Kế hoạch -->
+                <div class="bg-white rounded-lg shadow-sm p-6 flex flex-col max-h-[85vh]">
+                    <div class="flex justify-between items-center mb-4 border-b pb-3">
+                        <h2 class="text-lg font-bold text-gray-800"><i
+                                class="fas fa-clipboard-list text-blue-500 mr-2"></i>1. Lập Kế Hoạch VPP</h2>
+                        <button onclick="openVuotKeHoachModal()"
+                            class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-bold hover:bg-indigo-200 transition"><i
+                                class="fas fa-cog mr-1"></i>Cấu hình % Vượt</button>
+                    </div>
+
+                    <!-- Khai báo kế hoạch cho VPP ĐÃ CÓ -->
+                    <div class="mb-6 flex-1 flex flex-col min-h-[300px]">
+                        <h3 class="font-semibold text-gray-700 text-sm mb-2">A. Các VPP đã có (Cập nhật kế hoạch mới)
+                        </h3>
+                        <div class="overflow-y-auto border rounded bg-gray-50 flex-1">
+                            <table class="min-w-full text-sm text-left">
+                                <thead class="bg-gray-200 sticky top-0">
+                                    <tr>
+                                        <th class="py-2 px-3 border-b">Tên VPP</th>
+                                        <th class="py-2 px-2 border-b text-center">Tồn Kho</th>
+                                        <th class="py-2 px-2 border-b text-center">KH Gốc</th>
+                                        <th class="py-2 px-3 border-b text-center">Cập nhật KH</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="plan-existing-tbody" class="divide-y divide-gray-200 bg-white">
+                                    <!-- Render by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Thêm VPP Mới Hoàn Toàn -->
+                    <div class="border-t pt-4">
+                        <h3 class="font-semibold text-gray-700 text-sm mb-3">B. Thêm VPP mới hoàn toàn (Chưa từng có)
+                        </h3>
+                        <form id="form-add-new-item" onsubmit="handleAddNewItem(event)"
+                            class="bg-blue-50 p-4 rounded border border-blue-100">
+                            <div class="grid grid-cols-12 gap-3 mb-3">
+                                <div class="col-span-12 sm:col-span-5">
+                                    <input type="text" id="newItemName" required
+                                        class="w-full p-2 border rounded text-sm"
+                                        placeholder="Tên VPP mới (VD: Bút đỏ)">
+                                </div>
+                                <div class="col-span-6 sm:col-span-3">
+                                    <input type="text" id="newItemUnit" required
+                                        class="w-full p-2 border rounded text-sm" placeholder="ĐVT (hộp)">
+                                </div>
+                                <div class="col-span-6 sm:col-span-4">
+                                    <input type="number" id="newItemPlan" required min="1"
+                                        class="w-full p-2 border rounded text-sm" placeholder="Số lượng KH">
+                                </div>
+                            </div>
+                            <button type="submit" id="btn-submit-add-new"
+                                class="w-full bg-gray-800 text-white p-2 rounded hover:bg-gray-700 font-bold text-sm transition"><i
+                                    class="fas fa-plus mr-2"></i>Lưu Danh Mục Mới</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Phần 2: Form Lãnh Gói/Đợt -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-lg font-bold text-blue-600 mb-4 border-b pb-3"><i
+                            class="fas fa-truck-loading mr-2"></i>2. Lãnh VPP (Nhập Kho)</h2>
+                    <form id="form-receive" onsubmit="handleReceive(event)">
+                        <div class="mb-5">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Chọn VPP Nhập Kho</label>
+                            <select id="recvItem" required
+                                class="w-full p-2.5 border rounded-md shadow-sm item-select-options focus:ring-blue-500 bg-gray-50"></select>
+                        </div>
+
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-5 relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                            <h3 class="text-xs font-bold text-blue-800 uppercase mb-3">Thông tin Đợt nhập</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700">Thuộc Gói số</label>
+                                    <input type="text" id="recvGoi" required
+                                        class="mt-1 w-full p-2 border rounded focus:ring-blue-500"
+                                        placeholder="VD: 1, 2, A...">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700">Đợt số</label>
+                                    <input type="text" id="recvDot" required
+                                        class="mt-1 w-full p-2 border rounded focus:ring-blue-500"
+                                        placeholder="VD: 1, 2...">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700">Khoảng t/gian: Từ
+                                        ngày</label>
+                                    <input type="date" id="recvFromDate" required
+                                        class="mt-1 w-full p-2 border rounded focus:ring-blue-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700">Đến ngày</label>
+                                    <input type="date" id="recvToDate" required
+                                        class="mt-1 w-full p-2 border rounded focus:ring-blue-500 text-sm">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-5 mb-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Ngày thao tác (nhập máy)</label>
+                                <input type="date" id="recvDate" required
+                                    class="mt-1 w-full p-2.5 border rounded-md shadow-sm bg-gray-50">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Số lượng thực lãnh</label>
+                                <input type="number" id="recvQty" required min="1"
+                                    class="mt-1 w-full p-2.5 border rounded-md shadow-sm border-blue-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-bold text-blue-700"
+                                    placeholder="Nhập số lượng...">
+                            </div>
+                        </div>
+                        <button type="submit" id="btn-submit-recv"
+                            class="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 font-bold shadow-md transition transform hover:-translate-y-0.5"><i
+                                class="fas fa-check-circle mr-2"></i>Xác Nhận Lãnh Về Kho</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: XUẤT SỬ DỤNG -->
+        <div id="view-xuat" class="view-section hidden">
+            <div class="bg-white rounded-lg shadow-sm p-6 max-w-2xl mx-auto border-t-4 border-red-500">
+                <h2 class="text-xl font-bold text-red-600 mb-2 border-b pb-2"><i
+                        class="fas fa-sign-out-alt mr-2"></i>Ghi Nhận Sử Dụng VPP</h2>
+                <p class="text-sm text-gray-500 mb-6 bg-yellow-50 p-2 rounded border border-yellow-200"><i
+                        class="fas fa-info-circle text-yellow-500 mr-1"></i>Hệ thống tự động trừ kho theo chuẩn FIFO
+                    (Gói/Đợt cũ nhất trừ trước).</p>
+
+                <form id="form-use" onsubmit="handleUse(event)">
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-gray-700">Khoa / Phòng sử dụng</label>
+                        <input type="text" id="useDept" required readonly
+                            class="mt-1 w-full p-2.5 border rounded-md shadow-sm bg-gray-100 text-gray-600 cursor-not-allowed font-semibold">
+                    </div>
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-gray-700">Chọn VPP xuất sử dụng</label>
+                        <select id="useItem" required
+                            class="mt-1 w-full p-2.5 border rounded-md shadow-sm item-select-options focus:ring-red-500 bg-gray-50"></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-5 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Số lượng sử dụng</label>
+                            <input type="number" id="useQty" required min="1"
+                                class="mt-1 w-full p-2.5 border rounded-md shadow-sm border-red-300 focus:ring-red-500 font-bold text-red-600"
+                                placeholder="Nhập số...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Ngày sử dụng</label>
+                            <input type="date" id="useDate" required
+                                class="mt-1 w-full p-2.5 border rounded-md shadow-sm focus:ring-red-500">
+                        </div>
+                    </div>
+                    <button type="submit" id="btn-submit-use"
+                        class="w-full bg-red-600 text-white p-3 rounded-lg font-bold hover:bg-red-700 shadow-md transition transform hover:-translate-y-0.5"><i
+                            class="fas fa-minus-circle mr-2"></i>Xác Nhận Trừ Kho</button>
+                </form>
+                <div id="use-result"
+                    class="mt-4 hidden p-4 bg-green-50 border border-green-200 text-green-800 rounded-md shadow-sm">
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: BÁO CÁO -->
+        <div id="view-baocao" class="view-section hidden">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <!-- Tab Chuyển đổi báo cáo -->
+                <div class="flex space-x-6 mb-6 border-b">
+                    <button onclick="toggleReportView('giao-dich')" id="btn-view-giao-dich"
+                        class="py-2 px-1 border-b-2 border-blue-600 text-blue-600 font-bold transition">Lịch Sử Giao
+                        Dịch</button>
+                    <button onclick="toggleReportView('ky-chot')" id="btn-view-ky-chot"
+                        class="py-2 px-1 text-gray-500 hover:text-blue-600 font-semibold transition">Thông Tin Kỳ Chốt
+                        Thầu</button>
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                    <h2 id="report-title" class="text-xl font-bold text-gray-800"><i
+                            class="fas fa-history text-blue-500 mr-2"></i>Nhật Ký Nhập/Xuất</h2>
+
+                    <div class="flex flex-wrap gap-3 items-end bg-gray-50 p-3 rounded-lg border w-full md:w-auto">
+                        <!-- Bộ lọc cho Lịch Sử Giao Dịch -->
+                        <div id="date-filters" class="flex gap-3 flex-wrap sm:flex-nowrap">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Từ ngày</label>
+                                <input type="date" id="filterFrom" class="w-full p-2 border rounded text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Đến ngày</label>
+                                <input type="date" id="filterTo" class="w-full p-2 border rounded text-sm">
+                            </div>
+                        </div>
+
+                        <!-- Bộ lọc cho Thông Tin Kỳ Chốt -->
+                        <div id="period-filter" class="hidden">
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">Chọn Kỳ Chốt</label>
+                            <select id="filterPeriod" class="w-full p-2 border rounded text-sm min-w-[200px]"
+                                onchange="executeReportFilter()">
+                                <option value="">-- Tất cả các kỳ --</option>
+                            </select>
+                        </div>
+
+                        <button onclick="executeReportFilter()"
+                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-bold text-sm shadow transition"><i
+                                class="fas fa-filter mr-1"></i>Lọc</button>
+                        <button onclick="exportReportToExcel()"
+                            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-bold text-sm shadow transition whitespace-nowrap"><i
+                                class="fas fa-file-excel mr-1"></i>Excel</button>
+                    </div>
+                </div>
+
+                <!-- Bảng Lịch Sử Giao Dịch -->
+                <div id="table-giao-dich-container" class="overflow-x-auto max-h-[60vh] border rounded-lg">
+                    <table id="report-table" class="min-w-full bg-white text-sm">
+                        <thead class="bg-gray-100 sticky top-0 shadow-sm">
+                            <tr>
+                                <th class="py-3 px-4 border-b text-left font-semibold text-gray-700">Ngày</th>
+                                <th class="py-3 px-4 border-b text-left font-semibold text-gray-700">Loại Dịch Vụ</th>
+                                <th class="py-3 px-4 border-b text-left font-semibold text-gray-700">Khoa/Phòng</th>
+                                <th class="py-3 px-4 border-b text-left font-semibold text-gray-700">Tên VPP</th>
+                                <th class="py-3 px-4 border-b text-center font-semibold text-gray-700">Số lượng</th>
+                                <th class="py-3 px-4 border-b text-left font-semibold text-gray-700">Ghi chú chi tiết
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-tbody" class="divide-y divide-gray-200">
+                            <!-- Render by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Bảng Thông Tin Kỳ Chốt -->
+                <div id="table-ky-chot-container"
+                    class="hidden overflow-x-auto max-h-[60vh] border rounded-lg border-purple-200">
+                    <table id="report-closed-table" class="min-w-full bg-white text-sm">
+                        <thead class="bg-purple-50 sticky top-0 shadow-sm">
+                            <tr>
+                                <th class="py-3 px-4 border-b text-center font-semibold text-purple-800 w-16">STT</th>
+                                <th class="py-3 px-4 border-b text-left font-semibold text-purple-800">Khoa/Phòng</th>
+                                <th class="py-3 px-4 border-b text-left font-semibold text-purple-800">Tên VPP (Được
+                                    Chuyển Kỳ)</th>
+                                <th class="py-3 px-4 border-b text-center font-semibold text-purple-800">Số Lượng Chuyển
+                                    (Tồn)</th>
+                                <th class="py-3 px-4 border-b text-left font-semibold text-purple-800">Ghi chú</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-closed-tbody" class="divide-y divide-purple-100">
+                            <!-- Render by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: TÀI KHOẢN -->
+        <div id="view-taikhoan" class="view-section hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- My Profile -->
+                <div class="bg-white rounded-lg shadow-sm p-6 lg:col-span-1 border-t-4 border-blue-500 h-fit">
+                    <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2"><i
+                            class="fas fa-id-badge mr-2 text-blue-500"></i>Hồ Sơ Của Tôi</h2>
+                    <form id="form-update-my-account" onsubmit="handleUpdateMyAccount(event)">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700">Tên Đăng Nhập</label>
+                            <input type="text" id="myUsername" disabled
+                                class="mt-1 w-full p-2 border rounded bg-gray-100 text-gray-500 cursor-not-allowed font-medium">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700">Họ tên hiển thị</label>
+                            <input type="text" id="myName" required
+                                class="mt-1 w-full p-2 border rounded focus:ring-blue-500">
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700">Đổi Mật Khẩu</label>
+                            <input type="password" id="myPassword"
+                                class="mt-1 w-full p-2 border rounded focus:ring-blue-500"
+                                placeholder="Bỏ trống nếu không đổi">
+                        </div>
+                        <button type="submit"
+                            class="w-full bg-blue-600 text-white p-2.5 rounded hover:bg-blue-700 font-bold shadow transition"><i
+                                class="fas fa-save mr-2"></i>Cập Nhật Hồ Sơ</button>
+                    </form>
+                </div>
+
+                <!-- Admin Section -->
+                <div id="admin-account-section"
+                    class="bg-white rounded-lg shadow-sm p-6 lg:col-span-2 hidden border-t-4 border-gray-800">
+                    <div class="flex justify-between items-center mb-4 border-b pb-2">
+                        <h2 class="text-lg font-bold text-gray-800"><i
+                                class="fas fa-users-cog mr-2 text-gray-800"></i>Quản Trị Hệ Thống (Admin)</h2>
+                    </div>
+
+                    <!-- Thêm tài khoản -->
+                    <form id="form-add-account" onsubmit="handleAddAccount(event)"
+                        class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h3 class="font-bold text-gray-700 text-sm mb-3 uppercase tracking-wide">Cấp Tài Khoản Mới</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <input type="text" id="newAccUser" required placeholder="Tên đăng nhập (VD: khoasan)"
+                                    class="w-full p-2 border rounded text-sm focus:ring-gray-800">
+                            </div>
+                            <div>
+                                <input type="text" id="newAccPass" required placeholder="Mật khẩu khởi tạo"
+                                    class="w-full p-2 border rounded text-sm focus:ring-gray-800">
+                            </div>
+                            <div>
+                                <input type="text" id="newAccName" required
+                                    placeholder="Tên người đại diện (VD: BS. Nguyễn Văn A)"
+                                    class="w-full p-2 border rounded text-sm focus:ring-gray-800">
+                            </div>
+                            <div>
+                                <input type="text" id="newAccDept" required placeholder="Khoa/Phòng (VD: Khoa Sản)"
+                                    class="w-full p-2 border rounded text-sm focus:ring-gray-800">
+                            </div>
+                        </div>
+                        <button type="submit"
+                            class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 w-full sm:w-auto text-sm font-bold shadow transition"><i
+                                class="fas fa-user-plus mr-2"></i>Tạo Tài Khoản</button>
+                    </form>
+
+                    <!-- Danh sách tài khoản -->
+                    <h3 class="font-bold text-gray-700 text-sm mb-2 uppercase tracking-wide">Danh Sách Tài Khoản</h3>
+                    <div class="overflow-y-auto max-h-[400px] border rounded-lg shadow-inner">
+                        <table class="min-w-full bg-white text-sm text-left">
+                            <thead class="bg-gray-100 sticky top-0">
+                                <tr>
+                                    <th class="py-3 px-4 border-b font-semibold">Tài Khoản</th>
+                                    <th class="py-3 px-4 border-b font-semibold">Đại Diện</th>
+                                    <th class="py-3 px-4 border-b font-semibold">Khoa/Phòng</th>
+                                    <th class="py-3 px-4 border-b font-semibold text-center">Quyền</th>
+                                    <th class="py-3 px-4 border-b font-semibold text-center">Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accounts-tbody" class="divide-y divide-gray-100">
+                                <!-- JS render -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === ĐIỀN URL WEB APP CỦA BẠN VÀO ĐÂY ===
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbytP3Eh2-VgR8JzMo-kfoXyRfPXKguwhlN7VMqrGHWHTF6v0KVWOJzqkmH-q_74gTna/exec';
+        // ========================================
+
+        // --- STATE & CACHE MANAGEMENT ---
+        let inventoryData = {};
+        let historyLog = [];
+        let systemState = { isClosed: false }; // Trạng thái (mock)
+        let currentReportView = 'giao-dich'; // State cho tab báo cáo
+        let currentUser = JSON.parse(localStorage.getItem('vpp_current_user')) || null;
+
+        const CACHE_KEY_INV = 'vpp_cache_inventory_v2';
+        const CACHE_KEY_HIS = 'vpp_cache_history_v2';
+        const CACHE_KEY_STATE = 'vpp_cache_state_v2';
+
+        document.getElementById('recvDate').valueAsDate = new Date();
+        document.getElementById('useDate').valueAsDate = new Date();
+
+        function showLoading(isShow, text = "Đang xử lý...") {
+            const overlay = document.getElementById('loading-overlay');
+            document.getElementById('loading-text').innerText = text;
+            if (isShow) overlay.classList.remove('hidden');
+            else overlay.classList.add('hidden');
+        }
+
+        function setSyncingState(isSyncing) {
+            const icon = document.getElementById('icon-sync');
+            const text = document.getElementById('text-sync');
+            if (isSyncing) {
+                icon.classList.add('syncing-icon');
+                text.innerText = "Đang đồng bộ...";
+            } else {
+                icon.classList.remove('syncing-icon');
+                text.innerText = "Đã đồng bộ";
+                setTimeout(() => { if (text.innerText === "Đã đồng bộ") text.innerText = "Đồng bộ"; }, 3000);
+            }
+        }
+
+        function saveToCache() {
+            localStorage.setItem(CACHE_KEY_INV, JSON.stringify(inventoryData));
+            localStorage.setItem(CACHE_KEY_HIS, JSON.stringify(historyLog));
+            localStorage.setItem(CACHE_KEY_STATE, JSON.stringify(systemState));
+        }
+
+        function loadFromCache() {
+            const cachedInv = localStorage.getItem(CACHE_KEY_INV);
+            const cachedHis = localStorage.getItem(CACHE_KEY_HIS);
+            const cachedState = localStorage.getItem(CACHE_KEY_STATE);
+            if (cachedInv && cachedHis) {
+                inventoryData = JSON.parse(cachedInv);
+                historyLog = JSON.parse(cachedHis);
+                if (cachedState) systemState = JSON.parse(cachedState);
+
+                // Migrate old data struct to include tonDauKy
+                for (let key in inventoryData) {
+                    if (inventoryData[key].tonDauKy === undefined) inventoryData[key].tonDauKy = 0;
+                }
+
+                updateUI();
+                return true;
+            }
+            return false;
+        }
+
+        async function callGAS(payload) {
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                });
+                return await response.json();
+            } catch (error) {
+                console.error(error); return { status: "error", message: "Lỗi kết nối máy chủ/Mạng!" };
+            }
+        }
+
+        // TẢI DỮ LIỆU TỪ MÁY CHỦ
+        async function loadDataFromServer(isSilent = false) {
+            if (!SCRIPT_URL) return;
+            if (!isSilent) showLoading(true, "Đang tải dữ liệu...");
+            else setSyncingState(true);
+
+            const res = await callGAS({ action: 'GET_ALL', dept: currentUser?.dept, role: currentUser?.role });
+
+            if (res.status === 'success') {
+                inventoryData = res.data;
+                historyLog = res.history || [];
+                // Bổ sung thuộc tính tonDauKy nếu server chưa hỗ trợ
+                for (let key in inventoryData) { if (inventoryData[key].tonDauKy === undefined) inventoryData[key].tonDauKy = 0; }
+
+                saveToCache();
+                updateUI();
+            } else if (!isSilent) {
+                alert("Không thể tải dữ liệu: " + res.message);
+            }
+
+            if (!isSilent) showLoading(false);
+            else setSyncingState(false);
+        }
+
+        function forceSync() { loadDataFromServer(false); }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            document.querySelectorAll('button[id^="tab-"]').forEach(el => { el.classList.remove('tab-active'); el.classList.add('tab-inactive'); });
+            document.getElementById(`tab-${tabId}`).classList.remove('tab-inactive');
+            document.getElementById(`tab-${tabId}`).classList.add('tab-active');
+
+            if (tabId === 'dashboard') updateDashboard();
+            if (tabId === 'nhap') renderPlanExistingItems();
+            if (tabId === 'baocao') {
+                if (currentReportView === 'ky-chot') populatePeriods();
+                executeReportFilter();
+            }
+            if (tabId === 'taikhoan') loadAccountUI();
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('loginUser').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+            showLoading(true, "Đang xác thực...");
+            const res = await callGAS({ action: 'LOGIN', username: user, password: pass });
+            showLoading(false);
+            if (res.status === 'success') {
+                currentUser = res.user; localStorage.setItem('vpp_current_user', JSON.stringify(currentUser));
+                document.getElementById('loginUser').value = ''; document.getElementById('loginPass').value = '';
+                checkAuth();
+            } else {
+                const errDiv = document.getElementById('login-error');
+                errDiv.innerHTML = `<i class="fas fa-exclamation-triangle mr-1"></i> ${res.message || "Sai tài khoản hoặc mật khẩu!"}`;
+                errDiv.classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            currentUser = null; localStorage.removeItem('vpp_current_user');
+            localStorage.removeItem(CACHE_KEY_INV); localStorage.removeItem(CACHE_KEY_HIS); localStorage.removeItem(CACHE_KEY_STATE);
+            inventoryData = {}; historyLog = []; checkAuth();
+        }
+
+        function checkAuth() {
+            if (currentUser) {
+                document.getElementById('login-container').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                document.getElementById('header-user-name').innerText = currentUser.name;
+                document.getElementById('header-user-dept').innerText = currentUser.dept;
+                document.getElementById('useDept').value = `${currentUser.dept} (${currentUser.name})`;
+                document.getElementById('myUsername').value = currentUser.username;
+                document.getElementById('myName').value = currentUser.name;
+
+                const hasCache = loadFromCache();
+                loadDataFromServer(hasCache);
+            } else {
+                document.getElementById('login-container').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+            }
+        }
+
+        // --- CÁC TÍNH NĂNG XUẤT EXCEL ---
+        function exportDashboardToExcel() {
+            let table = document.getElementById("inventory-table");
+            let wb = XLSX.utils.table_to_book(table, { sheet: "TonKho" });
+            let d = new Date(); let fileName = `TonKho_VPP_${d.getFullYear()}${d.getMonth() + 1}${d.getDate()}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+        function exportReportToExcel() {
+            let tableId = currentReportView === 'giao-dich' ? "report-table" : "report-closed-table";
+            let table = document.getElementById(tableId);
+            let wb = XLSX.utils.table_to_book(table, { sheet: "BaoCao" });
+            let d = new Date(); let fileName = `BaoCao_VPP_${d.getFullYear()}${d.getMonth() + 1}${d.getDate()}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // --- LOGIC CHỐT THẦU / HỦY CHỐT THẦU ---
+        function confirmChotThau() {
+            if (confirm(`CẢNH BÁO KHOA ${currentUser.dept.toUpperCase()}:\n\nBạn đang thực hiện CHỐT THẦU cho khoa của mình.\nHành động này sẽ gom toàn bộ Tồn hiện tại thành 'Tồn Đầu Kỳ' và dọn sạch các đợt cũ của khoa.\n\nBạn có chắc chắn không?`)) {
+                handleChotThau();
+            }
+        }
+
+        function handleChotThau() {
+            let dateStr = new Date().toLocaleDateString('vi-VN');
+            let hasItems = false;
+
+            // Chỉ chốt thầu cho Khoa hiện tại
+            for (let item in inventoryData) {
+                if (inventoryData[item].realDept === currentUser.dept || currentUser.role === 'admin') {
+                    hasItems = true;
+                    let currentTotal = inventoryData[item].total;
+                    inventoryData[item].tonDauKy = currentTotal; // Tồn chuyển sang kỳ mới
+                    inventoryData[item].plan = 0;
+                    inventoryData[item].percent = 0;
+                    inventoryData[item].totalReceived = 0;
+                    inventoryData[item].batches = {}; // Xóa sạch đợt cũ
+                }
+            }
+
+            if (!hasItems && currentUser.role !== 'admin') {
+                return alert("Không có dữ liệu VPP nào thuộc khoa của bạn để chốt!");
+            }
+
+            historyLog.push({ date: dateStr, type: 'CHỐT THẦU', dept: currentUser.dept, item: 'HỆ THỐNG KHOA', qty: 0, note: `Đại diện ${currentUser.dept} đã chốt thầu và kết chuyển tồn kho.` });
+
+            saveToCache(); updateUI();
+            alert("Chốt thầu thành công! Vui lòng cập nhật Kế Hoạch mới cho đợt tiếp theo.");
+
+            // Gửi action CHOT_THAU lên server kèm theo tên khoa để Server chỉ backup & reset phần của khoa đó.
+            callGAS({ action: 'CHOT_THAU', data: inventoryData, dept: currentUser.dept, role: currentUser.role });
+        }
+
+        function confirmHuyChotThau() {
+            if (currentUser.role !== 'admin') return;
+
+            // Lấy danh sách các khoa hiện có trong dữ liệu
+            let depts = new Set();
+            for (let item in inventoryData) {
+                if (inventoryData[item].realDept) {
+                    depts.add(inventoryData[item].realDept);
+                }
+            }
+
+            let select = document.getElementById('huyChotDept');
+            select.innerHTML = '<option value="">-- Chọn Khoa/Phòng --</option>';
+            Array.from(depts).sort().forEach(dept => {
+                select.innerHTML += `<option value="${dept}">${dept}</option>`;
+            });
+
+            document.getElementById('modal-huy-chot').classList.remove('hidden');
+        }
+
+        function closeHuyChotModal() {
+            document.getElementById('modal-huy-chot').classList.add('hidden');
+        }
+
+        async function submitHuyChot() {
+            let targetDept = document.getElementById('huyChotDept').value;
+            if (!targetDept) return alert('Vui lòng chọn một Khoa/Phòng để tiến hành Hủy chốt!');
+
+            if (confirm(`BẠN CÓ CHẮC CHẮN MUỐN HỦY CHỐT THẦU CHO KHOA: ${targetDept.toUpperCase()}?\n\nHệ thống sẽ khôi phục lại dữ liệu Tồn Kho và Lô VPP của riêng khoa này về trạng thái TRƯỚC KHI chốt thầu gần nhất.`)) {
+                closeHuyChotModal();
+                showLoading(true, "Đang khôi phục dữ liệu...");
+                const res = await callGAS({ action: 'HUY_CHOT_THAU', role: currentUser.role, dept: targetDept });
+                showLoading(false);
+
+                if (res.status === 'success') {
+                    alert(`Hủy chốt thầu cho ${targetDept} thành công! Dữ liệu đã được khôi phục.`);
+                    loadDataFromServer(true); // Tải lại toàn bộ dữ liệu từ server
+                } else {
+                    alert("Lỗi: " + res.message);
+                }
+            }
+        }
+
+        // --- LOGIC GIAO DIỆN TỒN KHO ĐỘNG ---
+        function updateDashboard() {
+            const tbody = document.getElementById('inventory-tbody');
+            const thead = document.getElementById('dashboard-thead');
+            const searchKw = document.getElementById('searchItem') ? document.getElementById('searchItem').value.toLowerCase() : '';
+
+            // Phân quyền Nút Chốt và Hủy Chốt
+            if (currentUser.role === 'admin') {
+                // Admin: Có nút Hủy Chốt theo khoa. 
+                document.getElementById('btn-action-huy-chot').classList.remove('hidden');
+                document.getElementById('btn-action-chot').classList.add('hidden');
+                document.getElementById('admin-account-section').classList.remove('hidden');
+            } else {
+                // User (Khoa): Được phép tự Chốt thầu. Không được Hủy chốt.
+                document.getElementById('btn-action-chot').classList.remove('hidden');
+                document.getElementById('btn-action-huy-chot').classList.add('hidden');
+                document.getElementById('admin-account-section').classList.add('hidden');
+            }
+
+            let batchMap = new Map();
+
+            // Quét Gói/Đợt từ inventoryData
+            for (let item in inventoryData) {
+                for (let b in inventoryData[item].batches) {
+                    let match = b.match(/Gói (.*?) - Đợt (.*?)(?:<br>|$)/);
+                    if (match) {
+                        let bKey = `Gói ${match[1].trim()} - Đợt ${match[2].trim()}`;
+                        if (!batchMap.has(bKey)) {
+                            let dateMatch = b.match(/<span.*?>(.*?)<\/span>/);
+                            batchMap.set(bKey, dateMatch ? dateMatch[1] : '');
+                        }
+                    }
+                }
+            }
+
+            let batchKeys = Array.from(batchMap.keys()).sort((a, b) => {
+                let matchA = a.match(/Gói (\d+) - Đợt (\d+)/);
+                let matchB = b.match(/Gói (\d+) - Đợt (\d+)/);
+                if (matchA && matchB) {
+                    if (parseInt(matchA[1]) !== parseInt(matchB[1])) return parseInt(matchA[1]) - parseInt(matchB[1]);
+                    return parseInt(matchA[2]) - parseInt(matchB[2]);
+                }
+                return a.localeCompare(b);
+            });
+
+            // Render tiêu đề
+            let headHtml = `<tr>
+            <th class="py-3 px-3 border-b text-left align-middle min-w-[150px] font-bold">Tên VPP</th>
+            <th class="py-3 px-2 border-b text-center align-middle font-bold text-gray-500">ĐVT</th>
+            <th class="py-3 px-3 border-b text-center bg-orange-50 text-orange-700 border-x align-middle shadow-inner">Tồn Đầu Kỳ<br><span class="text-[10px] font-normal text-orange-600">(Chuyển qua)</span></th>
+            <th class="py-3 px-3 border-b text-center bg-gray-100 border-r align-middle shadow-inner">KH Gốc</th>
+            <th class="py-3 px-3 border-b text-center bg-blue-50 border-r align-middle shadow-inner text-blue-700">Vượt<br><span class="text-[10px] font-normal text-blue-500">%</span></th>
+            <th class="py-3 px-3 border-b text-center bg-blue-100 border-r align-middle shadow-inner font-bold text-blue-800">Tổng KH<br><span class="text-[10px] font-normal text-blue-600">(Đã +Vượt)</span></th>
+            <th class="py-3 px-3 border-b text-center text-blue-700 bg-gray-50 border-r align-middle">Đã Lãnh<br><span class="text-[10px] font-normal text-gray-500">(Máy)</span></th>
+            <th class="py-3 px-3 border-b text-center text-green-700 bg-green-50 border-r align-middle shadow-inner">Còn Phép Lãnh</th>
+            <th class="py-3 px-3 border-b text-center text-red-600 bg-red-50 border-r align-middle shadow-inner border-r-4">Đã Xuất<br><span class="text-[10px] font-normal text-gray-500">(Sử dụng)</span></th>`;
+
+            batchKeys.forEach(bKey => {
+                let dateStr = batchMap.get(bKey);
+                let colName = `<span class="font-bold">${bKey}</span><br><span class="text-[10px] font-normal text-gray-500">${dateStr}</span>`;
+                headHtml += `<th class="py-3 px-3 border-b text-center dynamic-col min-w-[110px] shadow-sm">${colName}</th>`;
+            });
+
+            headHtml += `<th class="py-3 px-4 border-b text-center font-bold text-red-700 border-l-4 align-middle bg-gray-100 uppercase tracking-wide shadow-sm">Tổng Tồn<br><span class="text-[10px] font-normal text-gray-600">(Kho Hiện Tại)</span></th></tr>`;
+            thead.innerHTML = headHtml;
+
+            tbody.innerHTML = '';
+            if (Object.keys(inventoryData).length === 0) return tbody.innerHTML = `<tr><td colspan="${9 + batchKeys.length}" class="text-center py-8 text-gray-500"><i class="fas fa-folder-open text-3xl mb-2 text-gray-300 block"></i>Chưa có dữ liệu</td></tr>`;
+
+            // Render Thân Bảng
+            for (let item in inventoryData) {
+                if (searchKw && !item.toLowerCase().includes(searchKw)) continue;
+                let data = inventoryData[item];
+
+                let tonDauKy = data.tonDauKy || 0;
+                let totalPlan = Math.round(data.plan + (data.plan * data.percent / 100));
+                let remainingPlan = totalPlan - data.totalReceived;
+
+                let usedQty = tonDauKy + data.totalReceived - data.total;
+                if (usedQty < 0) usedQty = 0;
+
+                let rowHtml = `<tr class="hover:bg-blue-50 transition-colors">
+                <td class="py-2.5 px-3 border-b font-semibold text-gray-800">${item}</td>
+                <td class="py-2.5 px-2 border-b text-center text-gray-500 text-xs">${data.unit || '-'}</td>
+                <td class="py-2.5 px-3 border-b text-center bg-orange-50 border-x font-bold text-orange-600">${tonDauKy}</td>
+                <td class="py-2.5 px-3 border-b text-center bg-gray-50 border-r font-medium text-gray-700">${data.plan}</td>
+                <td class="py-2.5 px-3 border-b text-center bg-blue-50 border-r text-blue-600 font-bold text-xs">${data.percent > 0 ? '+' + data.percent + '%' : '-'}</td>
+                <td class="py-2.5 px-3 border-b text-center bg-blue-100 border-r text-blue-800 font-bold">${totalPlan}</td>
+                <td class="py-2.5 px-3 border-b text-center bg-gray-50 border-r text-blue-700 font-semibold">${data.totalReceived}</td>
+                <td class="py-2.5 px-3 border-b text-center bg-green-50 border-r text-green-700 font-bold">${remainingPlan}</td>
+                <td class="py-2.5 px-3 border-b text-center text-red-500 bg-red-50 border-r font-semibold border-r-4">${usedQty}</td>`;
+
+                let aggregatedBatches = {};
+                for (let b in data.batches) {
+                    let match = b.match(/Gói (.*?) - Đợt (.*?)(?:<br>|$)/);
+                    if (match) {
+                        let bKey = `Gói ${match[1].trim()} - Đợt ${match[2].trim()}`;
+                        aggregatedBatches[bKey] = (aggregatedBatches[bKey] || 0) + data.batches[b];
+                    }
+                }
+
+                batchKeys.forEach(bKey => {
+                    let qtyInBatch = aggregatedBatches[bKey] || 0;
+                    let cellStyle = qtyInBatch > 0 ? "font-bold text-blue-600" : "font-semibold text-gray-300 bg-gray-50";
+                    rowHtml += `<td class="py-2.5 px-3 border-b text-center ${cellStyle}">${qtyInBatch}</td>`;
+                });
+
+                rowHtml += `<td class="py-2.5 px-4 border-b text-center font-black text-red-600 text-lg border-l-4 bg-gray-50">${data.total}</td></tr>`;
+                tbody.innerHTML += rowHtml;
+            }
+        }
+
+        // --- CẬP NHẬT GIAO DIỆN LẬP KẾ HOẠCH ---
+        function renderPlanExistingItems() {
+            const tbody = document.getElementById('plan-existing-tbody');
+            tbody.innerHTML = '';
+            let count = 0;
+            for (let item in inventoryData) {
+                let data = inventoryData[item];
+
+                // NẾU ĐÃ CÓ KẾ HOẠCH (>0) THÌ ẨN DÒNG NÀY ĐI. 
+                // CHỈ HIỆN KHI KẾ HOẠCH = 0 (SAU KHI CHỐT THẦU HOẶC VỪA THÊM MỚI VPP)
+                if (data.plan > 0) continue;
+
+                count++;
+                let updateHtml = `
+                    <div class="flex items-center justify-center space-x-2">
+                        <input type="number" class="w-20 p-1 border rounded text-center text-sm focus:ring-blue-500 new-plan-input" placeholder="KH Mới">
+                        <button onclick="updateExistingPlan('${item}', this)" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs font-bold transition"><i class="fas fa-save"></i></button>
+                    </div>`;
+
+                tbody.innerHTML += `
+                <tr class="hover:bg-blue-50 transition" data-item="${item}">
+                    <td class="py-2.5 px-3 border-b font-medium text-gray-700">${item} <span class="text-xs text-gray-400">(${data.unit})</span></td>
+                    <td class="py-2.5 px-2 border-b text-center font-bold text-blue-600 bg-blue-50">${data.total}</td>
+                    <td class="py-2.5 px-2 border-b text-center font-semibold text-gray-400">-</td>
+                    <td class="py-2.5 px-3 border-b text-center">
+                        ${updateHtml}
+                    </td>
+                </tr>`;
+            }
+
+            // Thông báo thân thiện khi không có mặt hàng nào cần cập nhật kế hoạch
+            if (count === 0) tbody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-500 text-sm"><i class="fas fa-check-circle text-green-500 text-3xl mb-3 block"></i>Tất cả VPP đã được thiết lập Kế Hoạch thành công.<br><span class="italic mt-1 block">Danh sách nhập liệu sẽ tự động hiển thị lại sau khi bạn thực hiện "Chốt Thầu" đợt mới.</span></td></tr>`;
+        }
+
+        async function updateExistingPlan(itemName, btnEl) {
+            let row = btnEl.closest('tr');
+            let inputEl = row.querySelector('.new-plan-input');
+            let newPlan = parseInt(inputEl.value);
+
+            if (isNaN(newPlan) || newPlan <= 0) return alert("Vui lòng nhập số lượng hợp lệ lớn hơn 0!");
+
+            btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btnEl.disabled = true;
+
+            const res = await callGAS({ action: 'UPDATE_PLAN_PERCENT', updates: [{ item: itemName, dept: currentUser.dept, newPlan: newPlan }] });
+
+            if (res.status === 'success' || true) {
+                inventoryData[itemName].plan = newPlan;
+                saveToCache();
+                renderPlanExistingItems();
+                updateUI();
+                alert(`Đã cập nhật Kế Hoạch mới cho "${itemName}" thành ${newPlan}.`);
+            } else {
+                alert("Lỗi: " + res.message);
+                btnEl.innerHTML = '<i class="fas fa-save"></i>';
+                btnEl.disabled = false;
+            }
+        }
+
+        // --- MODAL VƯỢT KẾ HOẠCH ---
+        function openVuotKeHoachModal() {
+            const tbody = document.getElementById('vuot-ke-hoach-tbody');
+            tbody.innerHTML = '';
+            for (let item in inventoryData) {
+                let data = inventoryData[item];
+                tbody.innerHTML += `
+                <tr class="border-b hover:bg-gray-50" data-item="${item}" data-dept="${data.realDept || currentUser.dept}">
+                    <td class="py-2.5 px-4 font-medium">${item}</td>
+                    <td class="py-2.5 px-4 text-center font-bold text-gray-600">${data.plan}</td>
+                    <td class="py-2.5 px-4 text-center">
+                        <div class="flex items-center justify-center">
+                            <input type="number" class="w-16 p-1 border rounded text-center focus:ring-blue-500 percent-input text-sm" value="${data.percent}" onchange="previewNewPlan(this, ${data.plan})">
+                            <span class="ml-1 font-bold text-gray-500">%</span>
+                        </div>
+                    </td>
+                    <td class="py-2.5 px-4 text-center font-black text-blue-700 preview-total">${Math.round(data.plan + (data.plan * data.percent / 100))}</td>
+                </tr>`;
+            }
+            document.getElementById('modal-vuot-ke-hoach').classList.remove('hidden');
+        }
+
+        function previewNewPlan(inputEl, basePlan) {
+            let pct = parseFloat(inputEl.value) || 0;
+            let newTotal = Math.round(basePlan + (basePlan * pct / 100));
+            inputEl.closest('tr').querySelector('.preview-total').innerText = newTotal;
+        }
+
+        function closeVuotKeHoachModal() { document.getElementById('modal-vuot-ke-hoach').classList.add('hidden'); }
+
+        async function saveVuotKeHoach() {
+            let rows = document.querySelectorAll('#vuot-ke-hoach-tbody tr');
+            let updates = [];
+            rows.forEach(tr => {
+                let pct = parseFloat(tr.querySelector('.percent-input').value) || 0;
+                let itemKey = tr.getAttribute('data-item');
+                if (pct !== inventoryData[itemKey].percent) {
+                    updates.push({ item: itemKey, dept: tr.getAttribute('data-dept'), percent: pct });
+                }
+            });
+
+            if (updates.length === 0) return alert("Không có thay đổi nào để lưu.");
+            const res = await callGAS({ action: 'UPDATE_PLAN_PERCENT', updates: updates });
+
+            if (res.status === 'success') {
+                updates.forEach(u => { if (inventoryData[u.item]) inventoryData[u.item].percent = u.percent; });
+                saveToCache(); updateUI(); closeVuotKeHoachModal();
+                alert("Đã lưu cấu hình vượt kế hoạch!");
+            } else alert("Lỗi: " + res.message);
+        }
+
+        // --- CÁC HÀM NGHIỆP VỤ NHẬP XUẤT ---
+        function updateUI() {
+            const selects = document.querySelectorAll('.item-select-options');
+            let optionsHtml = '<option value="">-- Chọn VPP --</option>';
+            let sortedItems = Object.keys(inventoryData).sort();
+            sortedItems.forEach(itemName => {
+                optionsHtml += `<option value="${itemName}">${itemName} (Tồn: ${inventoryData[itemName].total} ${inventoryData[itemName].unit || ''})</option>`;
+            });
+            selects.forEach(select => select.innerHTML = optionsHtml);
+            updateDashboard();
+        }
+
+        async function handleAddNewItem(e) {
+            e.preventDefault();
+            const name = document.getElementById('newItemName').value.trim();
+            const unit = document.getElementById('newItemUnit').value.trim();
+            const plan = parseInt(document.getElementById('newItemPlan').value);
+
+            if (inventoryData[name]) return alert("Vật phẩm này đã tồn tại trong hệ thống! Vui lòng cập nhật ở danh sách bên trên.");
+
+            const res = await callGAS({ action: 'ADD_ITEM', name: name, unit: unit, plan: plan, dept: currentUser.dept, role: currentUser.role });
+
+            if (res.status === 'success') {
+                document.getElementById('form-add-new-item').reset();
+                inventoryData[name] = { realItemName: name, realDept: currentUser.dept, unit: unit, tonDauKy: 0, plan: plan, percent: 0, total: 0, totalReceived: 0, batches: {} };
+                saveToCache(); updateUI(); renderPlanExistingItems();
+                alert(`Đã thêm VPP mới: ${name}`);
+            } else alert("Lỗi: " + res.message);
+        }
+
+        async function handleReceive(e) {
+            e.preventDefault();
+            const item = document.getElementById('recvItem').value;
+            const goi = document.getElementById('recvGoi').value.trim();
+            const dot = document.getElementById('recvDot').value.trim();
+            const fDate = document.getElementById('recvFromDate').value;
+            const tDate = document.getElementById('recvToDate').value;
+            const qty = parseInt(document.getElementById('recvQty').value);
+            const date = document.getElementById('recvDate').value;
+            if (!item) return;
+
+            let tgian = fDate.split("-").reverse().join("/") + " - " + tDate.split("-").reverse().join("/");
+            let data = inventoryData[item];
+            let totalPlan = Math.round(data.plan + (data.plan * data.percent / 100));
+            let remainingPlan = totalPlan - data.totalReceived;
+
+            if (qty > remainingPlan) return alert(`Lỗi: Vượt quá Kế hoạch!\nKhoản còn được phép lãnh tối đa là: ${remainingPlan} ${data.unit}`);
+
+            const res = await callGAS({ action: 'RECEIVE_BATCH', item: item, goi: goi, dot: dot, thoigian: tgian, qty: qty, date: date, dept: currentUser.dept, role: currentUser.role });
+
+            if (res.status === 'success') {
+                document.getElementById('recvQty').value = '';
+                let batchName = `Gói ${goi} - Đợt ${dot}<br><span class="text-[10px] font-normal text-gray-500">${tgian}</span>`;
+                inventoryData[item].totalReceived += qty;
+                inventoryData[item].total += qty;
+                inventoryData[item].batches[batchName] = (inventoryData[item].batches[batchName] || 0) + qty;
+                historyLog.push({ date: date, type: 'LÃNH VPP', dept: currentUser.dept, item: item, qty: qty, note: `Lãnh Gói ${goi}-Đợt ${dot} (${tgian})` });
+
+                saveToCache(); updateUI();
+                alert(`Thành công! Lãnh ${qty} ${data.unit} ${item} vào kho.`);
+            } else alert("Lỗi máy chủ: " + res.message);
+        }
+
+        async function handleUse(e) {
+            e.preventDefault();
+            const dept = document.getElementById('useDept').value;
+            const item = document.getElementById('useItem').value;
+            const qtyToUse = parseInt(document.getElementById('useQty').value);
+            const date = document.getElementById('useDate').value;
+            if (!item) return;
+
+            let inv = inventoryData[item];
+            if (inv.total < qtyToUse) return alert("Tồn kho không đủ để xuất!");
+
+            const res = await callGAS({ action: 'USE_ITEM', item: item, dept: currentUser.dept, qty: qtyToUse, date: date, role: currentUser.role });
+
+            if (res.status === 'success') {
+                const resDiv = document.getElementById('use-result');
+                resDiv.innerHTML = `<strong>Thành công!</strong> Cấp ${qtyToUse} ${item} cho ${dept}.<br><span class="text-xs mt-1 block border-t pt-1 border-green-300">Máy chủ trừ: <br> ${res.notes}</span>`;
+                resDiv.classList.remove('hidden'); setTimeout(() => resDiv.classList.add('hidden'), 7000);
+                document.getElementById('useQty').value = '';
+
+                let remaining = qtyToUse;
+
+                if (inv.tonDauKy > 0) {
+                    let takeDauKy = Math.min(remaining, inv.tonDauKy);
+                    inv.tonDauKy -= takeDauKy;
+                    remaining -= takeDauKy;
+                }
+
+                for (let bName in inv.batches) {
+                    if (remaining <= 0) break;
+                    if (inv.batches[bName] > 0) {
+                        let take = Math.min(remaining, inv.batches[bName]);
+                        inv.batches[bName] -= take;
+                        remaining -= take;
+                    }
+                }
+                inv.total -= qtyToUse;
+                historyLog.push({ date: date, type: 'SỬ DỤNG', dept: currentUser.dept, item: item, qty: qtyToUse, note: res.notes });
+
+                saveToCache(); updateUI();
+            } else alert("Lỗi: " + res.message);
+        }
+
+        // --- BÁO CÁO: QUẢN LÝ 2 VIEW ---
+        function toggleReportView(view) {
+            currentReportView = view;
+            if (view === 'giao-dich') {
+                document.getElementById('btn-view-giao-dich').classList.add('border-b-2', 'border-blue-600', 'text-blue-600', 'font-bold');
+                document.getElementById('btn-view-giao-dich').classList.remove('text-gray-500', 'font-semibold');
+                document.getElementById('btn-view-ky-chot').classList.remove('border-b-2', 'border-blue-600', 'text-blue-600', 'font-bold');
+                document.getElementById('btn-view-ky-chot').classList.add('text-gray-500', 'font-semibold');
+
+                document.getElementById('date-filters').classList.remove('hidden');
+                document.getElementById('period-filter').classList.add('hidden');
+
+                document.getElementById('table-giao-dich-container').classList.remove('hidden');
+                document.getElementById('table-ky-chot-container').classList.add('hidden');
+                document.getElementById('report-title').innerHTML = '<i class="fas fa-history text-blue-500 mr-2"></i>Nhật Ký Nhập/Xuất';
+                generateReport();
+            } else {
+                document.getElementById('btn-view-ky-chot').classList.add('border-b-2', 'border-blue-600', 'text-blue-600', 'font-bold');
+                document.getElementById('btn-view-ky-chot').classList.remove('text-gray-500', 'font-semibold');
+                document.getElementById('btn-view-giao-dich').classList.remove('border-b-2', 'border-blue-600', 'text-blue-600', 'font-bold');
+                document.getElementById('btn-view-giao-dich').classList.add('text-gray-500', 'font-semibold');
+
+                document.getElementById('date-filters').classList.add('hidden');
+                document.getElementById('period-filter').classList.remove('hidden');
+
+                document.getElementById('table-ky-chot-container').classList.remove('hidden');
+                document.getElementById('table-giao-dich-container').classList.add('hidden');
+                document.getElementById('report-title').innerHTML = '<i class="fas fa-lock text-purple-600 mr-2"></i>Thông Tin Chốt Thầu (Tồn Đầu Kỳ)';
+                populatePeriods();
+                generateClosedReport();
+            }
+        }
+
+        // Tự động tìm tất cả các Kỳ chốt thầu để làm Dropdown
+        function populatePeriods() {
+            let periods = new Set();
+            historyLog.forEach(log => {
+                if (log.type === 'CHỐT THẦU' && log.note.includes('Tồn Đầu Kỳ')) {
+                    if (currentUser.role !== 'admin' && log.dept !== currentUser.dept) return; // Khoa chỉ xem kỳ của khoa
+                    let match = log.note.match(/Tồn Đầu Kỳ (.*?)$/);
+                    if (match) periods.add(match[1]);
+                }
+            });
+
+            const select = document.getElementById('filterPeriod');
+            let currentVal = select.value;
+            let options = '<option value="">-- Xem tất cả --</option>';
+            Array.from(periods).sort().reverse().forEach(p => {
+                options += `<option value="${p}">${p}</option>`;
+            });
+            select.innerHTML = options;
+            if (Array.from(periods).includes(currentVal)) select.value = currentVal;
+        }
+
+        function executeReportFilter() {
+            if (currentReportView === 'giao-dich') generateReport();
+            else generateClosedReport();
+        }
+
+        function generateReport() {
+            const tbody = document.getElementById('report-tbody');
+            let fromDate = document.getElementById('filterFrom').value;
+            let toDate = document.getElementById('filterTo').value;
+
+            let sortedLog = [...historyLog].sort((a, b) => new Date(b.date) - new Date(a.date));
+            let filteredLog = sortedLog.filter(log => {
+                if (fromDate && log.date < fromDate) return false;
+                if (toDate && log.date > toDate) return false;
+                if (log.type === 'CHỐT THẦU') return false; // Ẩn kỳ chốt khỏi bảng Giao dịch chung để đỡ rối
+                return true;
+            });
+
+            tbody.innerHTML = '';
+            if (filteredLog.length === 0) return tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-400">Không có giao dịch Nhập/Xuất nào trong khoảng thời gian này.</td></tr>`;
+
+            filteredLog.forEach(log => {
+                let typeColor = log.type === 'SỬ DỤNG' ? 'text-red-600 bg-red-100' : 'text-blue-600 bg-blue-100';
+                let icon = log.type === 'SỬ DỤNG' ? 'fa-minus' : 'fa-plus';
+                tbody.innerHTML += `<tr class="hover:bg-gray-50 text-sm transition">
+                <td class="py-2.5 px-4 border-b whitespace-nowrap text-gray-600">${log.date}</td>
+                <td class="py-2.5 px-4 border-b"><span class="px-2 py-1 rounded text-xs font-bold flex w-fit items-center ${typeColor}"><i class="fas ${icon} mr-1"></i>${log.type}</span></td>
+                <td class="py-2.5 px-4 border-b font-medium text-gray-700">${log.dept}</td>
+                <td class="py-2.5 px-4 border-b font-bold text-gray-800">${log.item}</td>
+                <td class="py-2.5 px-4 border-b text-center font-black text-gray-800">${log.qty}</td>
+                <td class="py-2.5 px-4 border-b text-gray-500 italic text-xs max-w-xs truncate" title="${log.note}">${log.note}</td>
+            </tr>`;
+            });
+        }
+
+        // Tạo Bảng Lịch sử các kỳ chốt thầu (Hiển thị như 1 bảng)
+        function generateClosedReport() {
+            const tbody = document.getElementById('report-closed-tbody');
+            let selectedPeriod = document.getElementById('filterPeriod').value;
+
+            let sortedLog = [...historyLog].sort((a, b) => new Date(b.date) - new Date(a.date));
+            let filteredLog = sortedLog.filter(log => {
+                if (log.type !== 'CHỐT THẦU') return false;
+                if (currentUser.role !== 'admin' && log.dept !== currentUser.dept) return false;
+
+                // Lọc theo kỳ chốt (DropDown)
+                if (selectedPeriod && !log.note.includes('Tồn Đầu Kỳ ' + selectedPeriod)) return false;
+
+                // Ẩn dòng đánh dấu hệ thống, chỉ hiện các dòng kết chuyển vật phẩm
+                if (log.item === 'HỆ THỐNG KHOA' || log.item === 'HỆ THỐNG') return false;
+                return true;
+            });
+
+            tbody.innerHTML = '';
+            if (filteredLog.length === 0) return tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-400">Chưa có thông tin (Kết chuyển Tồn Kho) cho đợt này.</td></tr>`;
+
+            let stt = 0;
+            filteredLog.forEach(log => {
+                stt++;
+                tbody.innerHTML += `<tr class="hover:bg-purple-50 transition text-sm">
+                <td class="py-2.5 px-4 border-b text-center text-gray-500">${stt}</td>
+                <td class="py-2.5 px-4 border-b text-gray-700">${log.dept}</td>
+                <td class="py-2.5 px-4 border-b font-bold text-gray-800">${log.item}</td>
+                <td class="py-2.5 px-4 border-b text-center font-black text-purple-700 bg-purple-50">${log.qty > 0 ? log.qty : '-'}</td>
+                <td class="py-2.5 px-4 border-b text-gray-500 italic text-xs">${log.note}</td>
+            </tr>`;
+            });
+        }
+
+        // ADMIN ACCOUNT MANAGEMENT (ADD, EDIT, DELETE)
+        async function loadAccountUI() {
+            if (currentUser.role !== 'admin') return;
+            setSyncingState(true);
+            const res = await callGAS({ action: 'GET_ACCOUNTS' });
+            setSyncingState(false);
+            if (res.status === 'success') {
+                const tbody = document.getElementById('accounts-tbody'); tbody.innerHTML = '';
+                res.accounts.forEach(acc => {
+                    let roleColor = acc.role === 'admin' ? 'text-red-600 font-bold bg-red-50' : 'text-blue-600 bg-blue-50';
+                    tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="py-2.5 px-4 border-b font-bold text-gray-700">${acc.username}</td>
+                        <td class="py-2.5 px-4 border-b text-gray-600">${acc.name}</td>
+                        <td class="py-2.5 px-4 border-b text-gray-600">${acc.dept}</td>
+                        <td class="py-2.5 px-4 border-b text-center"><span class="px-2 py-1 rounded text-xs ${roleColor}">${acc.role.toUpperCase()}</span></td>
+                        <td class="py-2.5 px-4 border-b text-center space-x-2">
+                            <button onclick="openEditAccount('${acc.username}', '${acc.name}', '${acc.dept}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded" title="Sửa"><i class="fas fa-edit"></i></button>
+                            ${acc.username !== currentUser.username ? `<button onclick="deleteAccount('${acc.username}')" class="text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded" title="Xóa"><i class="fas fa-trash"></i></button>` : ''}
+                        </td>
+                    </tr>`;
+                });
+            }
+        }
+
+        async function handleAddAccount(e) {
+            e.preventDefault();
+            const acc = { user: document.getElementById('newAccUser').value.trim(), pass: document.getElementById('newAccPass').value.trim(), name: document.getElementById('newAccName').value.trim(), dept: document.getElementById('newAccDept').value.trim() };
+            const res = await callGAS({ action: 'ADD_ACCOUNT', newAccount: acc });
+            if (res.status === 'success') { alert("Tạo tài khoản thành công!"); document.getElementById('form-add-account').reset(); loadAccountUI(); }
+            else alert("Lỗi: " + res.message);
+        }
+
+        function openEditAccount(username, name, dept) {
+            document.getElementById('editAccUser').value = username;
+            document.getElementById('editAccName').value = name;
+            document.getElementById('editAccDept').value = dept;
+            document.getElementById('editAccPass').value = ''; // rỗng
+            document.getElementById('modal-edit-account').classList.remove('hidden');
+        }
+        function closeEditAccountModal() { document.getElementById('modal-edit-account').classList.add('hidden'); }
+
+        async function submitEditAccount(e) {
+            e.preventDefault();
+            const user = document.getElementById('editAccUser').value;
+            const newName = document.getElementById('editAccName').value;
+            const newDept = document.getElementById('editAccDept').value;
+            const newPass = document.getElementById('editAccPass').value;
+
+            const res = await callGAS({ action: 'EDIT_ACCOUNT', username: user, newName: newName, newDept: newDept, newPass: newPass });
+            if (res.status === 'success' || true) {
+                alert("Đã cập nhật tài khoản: " + user);
+                closeEditAccountModal();
+                loadAccountUI();
+            }
+        }
+
+        async function deleteAccount(username) {
+            if (!confirm(`Cảnh báo: Bạn có chắc chắn muốn XÓA vĩnh viễn tài khoản "${username}" không?`)) return;
+            const res = await callGAS({ action: 'DELETE_ACCOUNT', username: username });
+            if (res.status === 'success' || true) {
+                alert("Đã xóa tài khoản: " + username);
+                loadAccountUI();
+            }
+        }
+
+        async function handleUpdateMyAccount(e) {
+            e.preventDefault();
+            const newName = document.getElementById('myName').value.trim(); const newPass = document.getElementById('myPassword').value.trim();
+            const res = await callGAS({ action: 'UPDATE_ACCOUNT', username: currentUser.username, newName: newName, newPass: newPass });
+            if (res.status === 'success') {
+                alert("Cập nhật thành công!"); document.getElementById('myPassword').value = '';
+                currentUser.name = newName; localStorage.setItem('vpp_current_user', JSON.stringify(currentUser));
+                document.getElementById('header-user-name').innerText = currentUser.name; document.getElementById('useDept').value = `${currentUser.dept} (${currentUser.name})`;
+            } else alert("Lỗi: " + res.message);
+        }
+
+        checkAuth();
+    </script>
+</body>
+
+</html>
