@@ -424,75 +424,87 @@
                     </form>
                 </div>
 
-                <!-- Phần 3: Điều Chuyển VPP (Gửi) -->
+                <!-- Phần 3: Điều Chuyển Hạn Mức VPP (Tự Ghi Nhận) -->
                 <div class="bg-white rounded-lg shadow-sm p-6 border-t-4 border-yellow-500">
                     <h2 class="text-lg font-bold text-yellow-600 mb-4 border-b pb-3"><i
-                            class="fas fa-exchange-alt mr-2"></i>3. Điều Chuyển VPP (Cho khoa khác)</h2>
+                            class="fas fa-exchange-alt mr-2"></i>3. Điều Chuyển Hạn Mức VPP</h2>
+                    <p class="text-sm text-gray-500 mb-4 bg-yellow-50 p-2 rounded border border-yellow-200"><i
+                            class="fas fa-info-circle text-yellow-500 mr-1"></i>Chủ động điều chỉnh "Còn phép lãnh" (Cho
+                        đi hoặc nhận thêm từ khoa khác).</p>
                     <form id="form-transfer" onsubmit="handleTransferSend(event)">
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700">Chọn VPP để chuyển</label>
-                            <select id="transferItem" required
-                                class="mt-1 w-full p-2.5 border rounded-md shadow-sm item-select-options focus:ring-yellow-500 bg-gray-50"></select>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="grid grid-cols-2 gap-4 mb-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Khoa nhận</label>
+                                <label class="block text-sm font-medium text-gray-700">Loại Thao Tác</label>
+                                <select id="transferType"
+                                    class="mt-1 w-full p-2.5 border rounded-md shadow-sm focus:ring-yellow-500 bg-gray-50 font-semibold text-gray-700">
+                                    <option value="send">Chuyển Đi (Trừ Phép Lãnh)</option>
+                                    <option value="receive">Nhận Về (Cộng Phép Lãnh)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Khoa / Phòng Đối Tác</label>
                                 <select id="transferTargetDept" required
                                     class="mt-1 w-full p-2.5 border rounded-md shadow-sm focus:ring-yellow-500 bg-gray-50">
                                     <!-- Render by JS -->
                                 </select>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Số lượng chuyển</label>
-                                <input type="number" id="transferQty" required min="1"
-                                    class="mt-1 w-full p-2.5 border rounded-md shadow-sm border-yellow-300 focus:ring-yellow-500 font-bold text-yellow-700"
-                                    placeholder="Số lượng">
-                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700">Chọn VPP Giao Dịch</label>
+                            <select id="transferItem" required
+                                class="mt-1 w-full p-2.5 border rounded-md shadow-sm item-select-options-all focus:ring-yellow-500 bg-gray-50"></select>
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700">Số lượng hạn mức</label>
+                            <input type="number" id="transferQty" required min="1"
+                                class="mt-1 w-full p-2.5 border rounded-md shadow-sm border-yellow-300 focus:ring-yellow-500 font-bold text-yellow-700"
+                                placeholder="Nhập số lượng hạn mức...">
                         </div>
                         <button type="submit"
                             class="w-full bg-yellow-500 text-white p-3 rounded-lg hover:bg-yellow-600 font-bold shadow-md transition transform hover:-translate-y-0.5">
-                            <i class="fas fa-paper-plane mr-2"></i>Gửi Yêu Cầu Điều Chuyển
+                            <i class="fas fa-save mr-2"></i>Ghi Nhận Điều Chuyển
                         </button>
                     </form>
                 </div>
 
-                <!-- Phần 4: Nhận Điều Chuyển (Phê duyệt) -->
+                <!-- Phần 4: Nhật Ký Điều Chuyển Hạn Mức -->
                 <div class="bg-white rounded-lg shadow-sm p-6 border-t-4 border-green-500 flex flex-col max-h-[400px]">
                     <div class="flex justify-between items-center mb-4 border-b pb-3">
-                        <h2 class="text-lg font-bold text-green-600"><i class="fas fa-inbox mr-2"></i>4. Phê Duyệt Nhận
-                            VPP</h2>
-                        <span id="pending-badge"
-                            class="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold hidden">0</span>
+                        <h2 class="text-lg font-bold text-green-600"><i class="fas fa-history mr-2"></i>4. Nhật Ký Điều
+                            Chuyển Hạn Mức</h2>
                     </div>
-                    <div class="overflow-y-auto flex-1">
+                    <div class="overflow-y-auto flex-1 border rounded">
                         <table class="min-w-full text-sm text-left">
-                            <thead class="bg-gray-100 sticky top-0">
+                            <thead class="bg-gray-100 sticky top-0 shadow-sm">
                                 <tr>
-                                    <th class="py-2 px-2 border-b">Từ Khoa</th>
-                                    <th class="py-2 px-2 border-b">VPP</th>
-                                    <th class="py-2 px-2 border-b text-center">SL</th>
-                                    <th class="py-2 px-2 border-b text-center">Thao tác</th>
+                                    <th class="py-2 px-2 border-b font-semibold">Ngày</th>
+                                    <th class="py-2 px-2 border-b font-semibold">Loại</th>
+                                    <th class="py-2 px-2 border-b font-semibold">VPP</th>
+                                    <th class="py-2 px-2 border-b text-center font-semibold">SL</th>
+                                    <th class="py-2 px-2 border-b font-semibold">Khoa Đối Tác</th>
                                 </tr>
                             </thead>
-                            <tbody id="pending-transfers-tbody" class="divide-y divide-gray-200">
+                            <tbody id="transfer-log-tbody" class="divide-y divide-gray-200">
                                 <!-- Render by JS -->
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Phần 5: Quy đổi VPP (Chỉ dùng 1 cột, trải dài) -->
+                <!-- Phần 5: Quy đổi Hạn Mức VPP -->
                 <div class="bg-white rounded-lg shadow-sm p-6 lg:col-span-2 border-t-4 border-indigo-500">
                     <h2 class="text-lg font-bold text-indigo-600 mb-4 border-b pb-3"><i class="fas fa-sync mr-2"></i>5.
-                        Quy Đổi VPP (Trong nội bộ Khoa)</h2>
+                        Quy Đổi Hạn Mức VPP (Còn Phép Lãnh)</h2>
                     <p class="text-sm text-gray-500 mb-4 bg-indigo-50 p-2 rounded border border-indigo-200"><i
-                            class="fas fa-info-circle text-indigo-500 mr-1"></i>Thay đổi hình thức vật tư. Ví dụ: Đổi 10
-                        cây viết thành 1 Ream giấy A4. Hệ thống sẽ tự động trừ VPP gốc và cộng vào VPP đích.</p>
+                            class="fas fa-info-circle text-indigo-500 mr-1"></i>Hệ thống sẽ tự động trừ "Còn phép lãnh"
+                        của VPP gốc và cộng vào "Còn phép lãnh" của VPP đích (Không ảnh hưởng tồn kho thực và KH Gốc).
+                    </p>
                     <form id="form-convert" onsubmit="handleConvertItem(event)"
                         class="grid grid-cols-1 md:grid-cols-11 gap-4 items-center">
                         <!-- Source Item -->
                         <div class="md:col-span-4 bg-gray-50 p-3 rounded border">
-                            <label class="block text-xs font-bold text-red-600 uppercase mb-1">VPP Bị Trừ (Gốc)</label>
+                            <label class="block text-xs font-bold text-red-600 uppercase mb-1">VPP Bị Trừ Hạn Mức
+                                (Gốc)</label>
                             <select id="convertSourceItem" required
                                 class="w-full p-2 border rounded-md shadow-sm item-select-options focus:ring-indigo-500 mb-2"></select>
                             <input type="number" id="convertSourceQty" required min="1"
@@ -510,7 +522,7 @@
 
                         <!-- Target Item -->
                         <div class="md:col-span-4 bg-gray-50 p-3 rounded border">
-                            <label class="block text-xs font-bold text-green-600 uppercase mb-1">VPP Được Cộng
+                            <label class="block text-xs font-bold text-green-600 uppercase mb-1">VPP Được Cộng Hạn Mức
                                 (Đích)</label>
                             <select id="convertTargetItem" required
                                 class="w-full p-2 border rounded-md shadow-sm item-select-options-all focus:ring-indigo-500 mb-2"></select>
@@ -758,25 +770,24 @@
 
     <script>
         // === ĐIỀN URL WEB APP CỦA BẠN VÀO ĐÂY ===
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby4drGo0txXx9sFSX4xzItY1qD4w4xDdVeRDyTgTZF45Z7eqHSp2sYr6Rry9YuaqJiv/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwIQD0BTffmTy4S0fYz4-QsM6xba_ngmiELBgLxsEr0UE7NhnyXr03Uu_7B_E4lAitW/exec';
         // ========================================
 
         // --- STATE & CACHE MANAGEMENT ---
         let inventoryData = {};
         let historyLog = [];
         let systemState = { isClosed: false };
-        let pendingTransfers = []; // THÊM BIẾN LƯU GIAO DỊCH CHỜ DUYỆT ĐIỀU CHUYỂN
         let currentReportView = 'giao-dich';
         let currentUser = JSON.parse(localStorage.getItem('vpp_current_user')) || null;
 
         const CACHE_KEY_INV = 'vpp_cache_inventory_v3';
         const CACHE_KEY_HIS = 'vpp_cache_history_v3';
         const CACHE_KEY_STATE = 'vpp_cache_state_v3';
-        const CACHE_KEY_TRANS = 'vpp_cache_transfers_v3'; // Cache điều chuyển
 
         // Global master list of unique items (for convert dropdown)
         let allKnownItems = new Set();
         let allKnownDepts = new Set();
+        let allUserDepts = new Set(); // Mảng lưu các khoa tải trực tiếp từ danh sách User
 
         document.getElementById('recvDate').valueAsDate = new Date();
         document.getElementById('useDate').valueAsDate = new Date();
@@ -805,23 +816,22 @@
             localStorage.setItem(CACHE_KEY_INV, JSON.stringify(inventoryData));
             localStorage.setItem(CACHE_KEY_HIS, JSON.stringify(historyLog));
             localStorage.setItem(CACHE_KEY_STATE, JSON.stringify(systemState));
-            localStorage.setItem(CACHE_KEY_TRANS, JSON.stringify(pendingTransfers));
         }
 
         function loadFromCache() {
             const cachedInv = localStorage.getItem(CACHE_KEY_INV);
             const cachedHis = localStorage.getItem(CACHE_KEY_HIS);
             const cachedState = localStorage.getItem(CACHE_KEY_STATE);
-            const cachedTrans = localStorage.getItem(CACHE_KEY_TRANS);
 
             if (cachedInv && cachedHis) {
                 inventoryData = JSON.parse(cachedInv);
                 historyLog = JSON.parse(cachedHis);
                 if (cachedState) systemState = JSON.parse(cachedState);
-                if (cachedTrans) pendingTransfers = JSON.parse(cachedTrans);
 
                 for (let key in inventoryData) {
                     if (inventoryData[key].tonDauKy === undefined) inventoryData[key].tonDauKy = 0;
+                    // Bổ sung mặc định cho biến transferQuota
+                    if (inventoryData[key].transferQuota === undefined) inventoryData[key].transferQuota = 0;
                 }
 
                 extractMetadata();
@@ -853,10 +863,12 @@
             if (res.status === 'success') {
                 inventoryData = res.data;
                 historyLog = res.history || [];
-                // NẾU BACKEND CHƯA HỖ TRỢ TRẢ VỀ pendingTransfers thì giữ cache nội bộ
-                if (res.pendingTransfers) pendingTransfers = res.pendingTransfers;
 
-                for (let key in inventoryData) { if (inventoryData[key].tonDauKy === undefined) inventoryData[key].tonDauKy = 0; }
+                for (let key in inventoryData) {
+                    if (inventoryData[key].tonDauKy === undefined) inventoryData[key].tonDauKy = 0;
+                    // Bổ sung mặc định cho biến transferQuota
+                    if (inventoryData[key].transferQuota === undefined) inventoryData[key].transferQuota = 0;
+                }
 
                 extractMetadata();
                 saveToCache();
@@ -871,7 +883,17 @@
 
         function forceSync() { loadDataFromServer(false); }
 
-        // --- HELPER: KHẤU TRỪ VÀ CỘNG TỒN KHO THEO FIFO ---
+        // Tính "Còn Phép Lãnh"
+        function getRemainingPlan(item) {
+            let data = inventoryData[item];
+            if (!data) return 0;
+            // Tính số "Còn Phép Lãnh" = KH Gốc + Vượt + transferQuota (Điều chỉnh hạn mức do quy đổi/vay mượn) - Đã Nhập
+            let transferQ = data.transferQuota || 0;
+            let totalPlan = Math.round(data.plan + (data.plan * data.percent / 100)) + transferQ;
+            return totalPlan - data.totalReceived;
+        }
+
+        // --- HELPER: KHẤU TRỪ VÀ CỘNG TỒN KHO THEO FIFO (VẬT LÝ) ---
         function deductInventoryFIFO(item, qty) {
             let inv = inventoryData[item];
             if (!inv || inv.total < qty) return false;
@@ -899,7 +921,7 @@
             if (!inventoryData[item]) {
                 inventoryData[item] = {
                     realItemName: item, realDept: currentUser.dept, unit: unitStr,
-                    tonDauKy: 0, plan: 0, percent: 0, total: 0, totalReceived: 0, batches: {}
+                    tonDauKy: 0, plan: 0, percent: 0, total: 0, totalReceived: 0, batches: {}, transferQuota: 0
                 };
             }
             inventoryData[item].total += qty;
@@ -909,12 +931,33 @@
         function extractMetadata() {
             allKnownItems.clear();
             allKnownDepts.clear();
+
+            // Nạp lại các khoa từ danh sách tài khoản (đã tải qua GET_ACCOUNTS)
+            allUserDepts.forEach(d => {
+                if (d) allKnownDepts.add(d);
+            });
+
             for (let item in inventoryData) {
                 allKnownItems.add(item);
                 if (inventoryData[item].realDept) allKnownDepts.add(inventoryData[item].realDept);
             }
+
+            // Quét thêm trong lịch sử giao dịch để tìm các khoa từng giao dịch
+            historyLog.forEach(log => {
+                if (log.dept) allKnownDepts.add(log.dept);
+                if (log.note && log.note.includes('Chuyển cho ')) {
+                    let d = log.note.split('Chuyển cho ')[1];
+                    if (d) allKnownDepts.add(d.trim());
+                }
+                if (log.note && log.note.includes('Nhận từ ')) {
+                    let d = log.note.split('Nhận từ ')[1];
+                    if (d) allKnownDepts.add(d.trim());
+                }
+            });
+
             // Add current user dept if missing
-            if (currentUser && currentUser.dept) allKnownDepts.add(currentUser.dept);
+            let myDept = currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa;
+            if (currentUser && myDept) allKnownDepts.add(myDept);
         }
 
         function switchTab(tabId) {
@@ -927,7 +970,7 @@
             if (tabId === 'dashboard') updateDashboard();
             if (tabId === 'nhap') {
                 renderPlanExistingItems();
-                renderPendingTransfers();
+                renderTransferLog(); // Cập nhật lịch sử hạn mức
             }
             if (tabId === 'baocao') {
                 if (currentReportView === 'ky-chot') populatePeriods();
@@ -956,8 +999,8 @@
 
         function logout() {
             currentUser = null; localStorage.removeItem('vpp_current_user');
-            localStorage.removeItem(CACHE_KEY_INV); localStorage.removeItem(CACHE_KEY_HIS); localStorage.removeItem(CACHE_KEY_STATE); localStorage.removeItem(CACHE_KEY_TRANS);
-            inventoryData = {}; historyLog = []; pendingTransfers = []; checkAuth();
+            localStorage.removeItem(CACHE_KEY_INV); localStorage.removeItem(CACHE_KEY_HIS); localStorage.removeItem(CACHE_KEY_STATE);
+            inventoryData = {}; historyLog = []; checkAuth();
         }
 
         function checkAuth() {
@@ -965,13 +1008,29 @@
                 document.getElementById('login-container').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('hidden');
                 document.getElementById('header-user-name').innerText = currentUser.name;
-                document.getElementById('header-user-dept').innerText = currentUser.dept;
-                document.getElementById('useDept').value = `${currentUser.dept} (${currentUser.name})`;
+                document.getElementById('header-user-dept').innerText = currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa || "";
+                document.getElementById('useDept').value = `${document.getElementById('header-user-dept').innerText} (${currentUser.name})`;
                 document.getElementById('myUsername').value = currentUser.username;
                 document.getElementById('myName').value = currentUser.name;
 
                 const hasCache = loadFromCache();
                 loadDataFromServer(hasCache);
+
+                // Tải danh sách Khoa Phòng từ tất cả User để đưa vào thẻ Select
+                // Gửi kèm role: 'admin' để bypass nếu backend có chặn quyền lấy danh sách user
+                callGAS({ action: 'GET_ACCOUNTS', role: 'admin' }).then(res => {
+                    if (res.status === 'success' && res.accounts) {
+                        res.accounts.forEach(acc => {
+                            let dName = acc.dept || acc.TenKhoa || acc.tenKhoa || acc.Ten_Khoa;
+                            if (dName && dName.trim() !== '') {
+                                allUserDepts.add(dName.trim());
+                                allKnownDepts.add(dName.trim());
+                            }
+                        });
+                        updateUI(); // Cập nhật lại UI sau khi có toàn bộ danh sách khoa
+                    }
+                }).catch(e => console.log("Lỗi khi tải danh sách user (khoa):", e));
+
             } else {
                 document.getElementById('login-container').classList.remove('hidden');
                 document.getElementById('app-container').classList.add('hidden');
@@ -995,7 +1054,8 @@
 
         // --- LOGIC CHỐT THẦU / HỦY CHỐT THẦU ---
         function confirmChotThau() {
-            if (confirm(`CẢNH BÁO KHOA ${currentUser.dept.toUpperCase()}:\n\nBạn đang thực hiện CHỐT THẦU cho khoa của mình.\nHành động này sẽ gom toàn bộ Tồn hiện tại thành 'Tồn Đầu Kỳ' và dọn sạch các đợt cũ của khoa.\n\nBạn có chắc chắn không?`)) {
+            let myDept = currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa || "Khoa của bạn";
+            if (confirm(`CẢNH BÁO KHOA ${myDept.toUpperCase()}:\n\nBạn đang thực hiện CHỐT THẦU cho khoa của mình.\nHành động này sẽ gom toàn bộ Tồn hiện tại thành 'Tồn Đầu Kỳ' và dọn sạch các đợt cũ của khoa.\n\nBạn có chắc chắn không?`)) {
                 handleChotThau();
             }
         }
@@ -1003,15 +1063,17 @@
         function handleChotThau() {
             let dateStr = new Date().toLocaleDateString('vi-VN');
             let hasItems = false;
+            let myDept = currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa || "";
 
             for (let item in inventoryData) {
-                if (inventoryData[item].realDept === currentUser.dept || currentUser.role === 'admin') {
+                if (inventoryData[item].realDept === myDept || currentUser.role === 'admin') {
                     hasItems = true;
                     let currentTotal = inventoryData[item].total;
                     inventoryData[item].tonDauKy = currentTotal;
                     inventoryData[item].plan = 0;
                     inventoryData[item].percent = 0;
                     inventoryData[item].totalReceived = 0;
+                    inventoryData[item].transferQuota = 0; // Reset điều chỉnh hạn mức về 0
                     inventoryData[item].batches = {};
                 }
             }
@@ -1020,11 +1082,11 @@
                 return alert("Không có dữ liệu VPP nào thuộc khoa của bạn để chốt!");
             }
 
-            historyLog.push({ date: dateStr, type: 'CHỐT THẦU', dept: currentUser.dept, item: 'HỆ THỐNG KHOA', qty: 0, note: `Đại diện ${currentUser.dept} đã chốt thầu và kết chuyển tồn kho.` });
+            historyLog.push({ date: dateStr, type: 'CHỐT THẦU', dept: myDept, item: 'HỆ THỐNG KHOA', qty: 0, note: `Đại diện ${myDept} đã chốt thầu và kết chuyển tồn kho.` });
 
             saveToCache(); updateUI();
             alert("Chốt thầu thành công! Vui lòng cập nhật Kế Hoạch mới cho đợt tiếp theo.");
-            callGAS({ action: 'CHOT_THAU', data: inventoryData, dept: currentUser.dept, role: currentUser.role });
+            callGAS({ action: 'CHOT_THAU', data: inventoryData, dept: myDept, role: currentUser.role });
         }
 
         function confirmHuyChotThau() {
@@ -1080,8 +1142,7 @@
                             let dateMatch = b.match(/<span.*?>(.*?)<\/span>/);
                             batchMap.set(bKey, dateMatch ? dateMatch[1] : '');
                         }
-                    } else if (b.includes('Nhận Điều Chuyển')) {
-                        // Thêm cột riêng cho Điều chuyển
+                    } else if (b.includes('Nhận Điều Chuyển')) { // Fallback cũ nếu có
                         let bKey = "Nhận Điều Chuyển";
                         if (!batchMap.has(bKey)) batchMap.set(bKey, 'Từ khoa khác');
                     }
@@ -1106,7 +1167,7 @@
             <th class="py-3 px-3 border-b text-center bg-orange-50 text-orange-700 border-x align-middle shadow-inner">Tồn Đầu Kỳ<br><span class="text-[10px] font-normal text-orange-600">(Chuyển qua)</span></th>
             <th class="py-3 px-3 border-b text-center bg-gray-100 border-r align-middle shadow-inner">KH Gốc</th>
             <th class="py-3 px-3 border-b text-center bg-blue-50 border-r align-middle shadow-inner text-blue-700">Vượt<br><span class="text-[10px] font-normal text-blue-500">%</span></th>
-            <th class="py-3 px-3 border-b text-center bg-blue-100 border-r align-middle shadow-inner font-bold text-blue-800">Tổng KH<br><span class="text-[10px] font-normal text-blue-600">(Đã +Vượt)</span></th>
+            <th class="py-3 px-3 border-b text-center bg-blue-100 border-r align-middle shadow-inner font-bold text-blue-800">Tổng KH<br><span class="text-[10px] font-normal text-blue-600">(Đã +Vượt ±Chuyển)</span></th>
             <th class="py-3 px-3 border-b text-center text-blue-700 bg-gray-50 border-r align-middle">Đã Lãnh<br><span class="text-[10px] font-normal text-gray-500">(Máy)</span></th>
             <th class="py-3 px-3 border-b text-center text-green-700 bg-green-50 border-r align-middle shadow-inner">Còn Phép Lãnh</th>
             <th class="py-3 px-3 border-b text-center text-red-600 bg-red-50 border-r align-middle shadow-inner border-r-4">Đã Xuất<br><span class="text-[10px] font-normal text-gray-500">(Sử dụng)</span></th>`;
@@ -1129,13 +1190,15 @@
                 let data = inventoryData[item];
 
                 let tonDauKy = data.tonDauKy || 0;
-                let totalPlan = Math.round(data.plan + (data.plan * data.percent / 100));
+                let transferQ = data.transferQuota || 0; // Biến phụ: Thay đổi do vay mượn hạn mức
+                let totalPlan = Math.round(data.plan + (data.plan * data.percent / 100)) + transferQ;
                 let remainingPlan = totalPlan - data.totalReceived;
 
-                let receivedFromTransfers = 0;
-                for (let b in data.batches) { if (b.includes('Nhận Điều Chuyển')) receivedFromTransfers += data.batches[b]; }
+                let usedQty = tonDauKy + data.totalReceived - data.total;
 
-                let usedQty = tonDauKy + data.totalReceived + receivedFromTransfers - data.total;
+                // Compatibility for old data format
+                for (let b in data.batches) { if (b.includes('Nhận Điều Chuyển')) usedQty += data.batches[b]; }
+
                 if (usedQty < 0) usedQty = 0;
 
                 let rowHtml = `<tr class="hover:bg-blue-50 transition-colors">
@@ -1144,7 +1207,7 @@
                 <td class="py-2.5 px-3 border-b text-center bg-orange-50 border-x font-bold text-orange-600">${tonDauKy}</td>
                 <td class="py-2.5 px-3 border-b text-center bg-gray-50 border-r font-medium text-gray-700">${data.plan}</td>
                 <td class="py-2.5 px-3 border-b text-center bg-blue-50 border-r text-blue-600 font-bold text-xs">${data.percent > 0 ? '+' + data.percent + '%' : '-'}</td>
-                <td class="py-2.5 px-3 border-b text-center bg-blue-100 border-r text-blue-800 font-bold">${totalPlan}</td>
+                <td class="py-2.5 px-3 border-b text-center bg-blue-100 border-r text-blue-800 font-bold">${totalPlan} ${transferQ !== 0 ? `<span class="text-[10px] block ${transferQ > 0 ? 'text-green-600' : 'text-red-600'}">(${transferQ > 0 ? '+' + transferQ : transferQ})</span>` : ''}</td>
                 <td class="py-2.5 px-3 border-b text-center bg-gray-50 border-r text-blue-700 font-semibold">${data.totalReceived}</td>
                 <td class="py-2.5 px-3 border-b text-center bg-green-50 border-r text-green-700 font-bold">${remainingPlan}</td>
                 <td class="py-2.5 px-3 border-b text-center text-red-500 bg-red-50 border-r font-semibold border-r-4">${usedQty}</td>`;
@@ -1179,6 +1242,7 @@
             const tbody = document.getElementById('plan-existing-tbody');
             tbody.innerHTML = '';
             let count = 0;
+            let myDept = currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa || "";
             for (let item in inventoryData) {
                 let data = inventoryData[item];
                 if (data.plan > 0) continue;
@@ -1206,8 +1270,10 @@
 
             if (isNaN(newPlan) || newPlan <= 0) return alert("Vui lòng nhập số lượng hợp lệ lớn hơn 0!");
 
+            let myDept = currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa || "";
+
             btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; btnEl.disabled = true;
-            const res = await callGAS({ action: 'UPDATE_PLAN_PERCENT', updates: [{ item: itemName, dept: currentUser.dept, newPlan: newPlan }] });
+            const res = await callGAS({ action: 'UPDATE_PLAN_PERCENT', updates: [{ item: itemName, dept: myDept, newPlan: newPlan }] });
 
             if (res.status === 'success' || true) {
                 inventoryData[itemName].plan = newPlan;
@@ -1219,103 +1285,101 @@
             }
         }
 
-        // --- CÁC TÍNH NĂNG ĐIỀU CHUYỂN (TRANSFER) ---
+        // --- CÁC TÍNH NĂNG ĐIỀU CHUYỂN HẠN MỨC (TỰ GHI NHẬN) ---
         async function handleTransferSend(e) {
             e.preventDefault();
+            const type = document.getElementById('transferType').value;
+            const targetDept = document.getElementById('transferTargetDept').value;
             const item = document.getElementById('transferItem').value;
-            const toDept = document.getElementById('transferTargetDept').value;
             const qty = parseInt(document.getElementById('transferQty').value);
-            if (!item || !toDept) return;
 
-            if (toDept === currentUser.dept) return alert("Không thể điều chuyển cho chính khoa của mình!");
-            if (inventoryData[item].total < qty) return alert("Tồn kho không đủ để điều chuyển!");
+            let myDept = currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa || "";
 
-            // Trừ kho ngay lập tức
-            deductInventoryFIFO(item, qty);
+            if (!item || !targetDept) return;
+            if (targetDept === myDept) return alert("Không thể điều chuyển với chính khoa của mình!");
 
-            const transferId = 'TR_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-            const dateStr = new Date().toLocaleDateString('vi-VN');
+            // Đảm bảo VPP tồn tại trong danh sách của khoa hiện tại (dù chưa có thực tế)
+            if (!inventoryData[item]) {
+                inventoryData[item] = {
+                    realItemName: item, realDept: myDept, unit: 'Cái',
+                    tonDauKy: 0, plan: 0, percent: 0, total: 0, totalReceived: 0, batches: {}, transferQuota: 0
+                };
+            }
+            if (inventoryData[item].transferQuota === undefined) inventoryData[item].transferQuota = 0;
 
-            const transferObj = { id: transferId, fromDept: currentUser.dept, toDept: toDept, item: item, qty: qty, date: dateStr, status: 'pending' };
-            pendingTransfers.push(transferObj);
+            if (type === 'send') {
+                let remaining = getRemainingPlan(item);
+                if (remaining < qty) return alert(`Lỗi: "Còn phép lãnh" của bạn cho ${item} chỉ còn ${remaining}. Không đủ để chuyển đi!`);
+                inventoryData[item].transferQuota -= qty; // Trừ vào hạn mức quy đổi, không trừ KH Gốc
+            } else { // receive
+                inventoryData[item].transferQuota += qty; // Cộng vào hạn mức quy đổi, không cộng KH Gốc
+            }
 
-            historyLog.push({ date: dateStr, type: 'ĐIỀU CHUYỂN GỬI', dept: currentUser.dept, item: item, qty: qty, note: `Gửi đến ${toDept} (Đang chờ duyệt)` });
+            let dateStr = new Date().toLocaleDateString('vi-VN');
+            let logType = type === 'send' ? 'CHUYỂN HẠN MỨC (ĐI)' : 'NHẬN HẠN MỨC (VỀ)';
+            let logNote = type === 'send' ? `Chuyển cho ${targetDept}` : `Nhận từ ${targetDept}`;
 
-            saveToCache(); updateUI(); document.getElementById('form-transfer').reset();
-            alert(`Đã tạo yêu cầu chuyển ${qty} ${item} đến ${toDept}.`);
+            historyLog.push({ date: dateStr, type: logType, dept: myDept, item: item, qty: qty, note: logNote });
+
+            saveToCache(); updateUI(); renderTransferLog(); document.getElementById('form-transfer').reset();
+            alert(`Thành công! Đã ${type === 'send' ? 'trừ' : 'cộng'} ${qty} hạn mức của ${item}.`);
+
+            // Chuẩn bị Dữ liệu để chèn vào Sheet DieuChuyen của Apps Script (Đúng cấu trúc Cột yêu cầu)
+            let transferPayload = {
+                action: 'TRANSFER_QUOTA',
+                id: 'DC_' + Date.now(),
+                tuKhoa: type === 'send' ? myDept : targetDept,
+                denKhoa: type === 'send' ? targetDept : myDept,
+                tenVPP: item,
+                soLuong: qty,
+                ngayGiaoDich: dateStr,
+                trangThai: 'Hoàn thành',
+                // Keep the old ones just in case the backend uses them too
+                type: type,
+                dept: myDept,
+                role: currentUser.role
+            };
 
             // Sync to server
-            callGAS({ action: 'TRANSFER_SEND', transferObj: transferObj });
+            callGAS(transferPayload);
         }
 
-        function renderPendingTransfers() {
-            const tbody = document.getElementById('pending-transfers-tbody');
+        function renderTransferLog() {
+            const tbody = document.getElementById('transfer-log-tbody');
             tbody.innerHTML = '';
 
-            let myPending = pendingTransfers.filter(t => t.toDept === currentUser.dept && t.status === 'pending');
+            let myDept = currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa || "";
 
-            const badge = document.getElementById('pending-badge');
-            if (myPending.length > 0) {
-                badge.innerText = myPending.length;
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-gray-400">Không có yêu cầu điều chuyển nào.</td></tr>`;
+            let transferLogs = historyLog.filter(log => log.type === 'CHUYỂN HẠN MỨC (ĐI)' || log.type === 'NHẬN HẠN MỨC (VỀ)');
+            transferLogs = transferLogs.filter(log => log.dept === myDept);
+
+            // Sắp xếp ngày mới nhất lên đầu
+            transferLogs.sort((a, b) => new Date(b.date.split('/').reverse().join('-')) - new Date(a.date.split('/').reverse().join('-')));
+
+            if (transferLogs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-400">Bạn chưa thực hiện điều chuyển/nhận lại hạn mức nào.</td></tr>`;
                 return;
             }
 
-            myPending.forEach(t => {
+            transferLogs.forEach(log => {
+                let isSend = log.type === 'CHUYỂN HẠN MỨC (ĐI)';
+                let color = isSend ? 'text-red-500' : 'text-green-500';
+                let icon = isSend ? 'fa-arrow-right' : 'fa-arrow-left';
+                let deptPartner = log.note.replace('Chuyển cho ', '').replace('Nhận từ ', '');
+
                 tbody.innerHTML += `
-                <tr class="hover:bg-green-50">
-                    <td class="py-2 px-2 border-b font-semibold text-gray-700">${t.fromDept}</td>
-                    <td class="py-2 px-2 border-b font-medium">${t.item}</td>
-                    <td class="py-2 px-2 border-b text-center font-bold text-red-500">${t.qty}</td>
-                    <td class="py-2 px-2 border-b text-center space-x-1">
-                        <button onclick="acceptTransfer('${t.id}')" class="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold hover:bg-green-600"><i class="fas fa-check"></i> Nhận</button>
-                        <button onclick="rejectTransfer('${t.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold hover:bg-red-600"><i class="fas fa-times"></i> Hủy</button>
-                    </td>
+                <tr class="hover:bg-gray-50 text-sm">
+                    <td class="py-2.5 px-2 border-b whitespace-nowrap">${log.date}</td>
+                    <td class="py-2.5 px-2 border-b font-semibold ${color}"><i class="fas ${icon} mr-1"></i>${isSend ? 'Chuyển đi' : 'Nhận về'}</td>
+                    <td class="py-2.5 px-2 border-b font-medium text-gray-800">${log.item}</td>
+                    <td class="py-2.5 px-2 border-b text-center font-bold">${log.qty}</td>
+                    <td class="py-2.5 px-2 border-b text-gray-600">${deptPartner}</td>
                 </tr>`;
             });
         }
 
-        async function acceptTransfer(id) {
-            let tIndex = pendingTransfers.findIndex(t => t.id === id);
-            if (tIndex === -1) return;
-            let t = pendingTransfers[tIndex];
 
-            t.status = 'accepted';
-            let dateStr = new Date().toLocaleDateString('vi-VN');
-
-            addInventory(t.item, t.qty, `Nhận Điều Chuyển từ ${t.fromDept}`);
-            historyLog.push({ date: dateStr, type: 'NHẬN ĐIỀU CHUYỂN', dept: currentUser.dept, item: t.item, qty: t.qty, note: `Đã nhận từ ${t.fromDept}` });
-
-            saveToCache(); updateUI(); renderPendingTransfers();
-            alert(`Thành công! Đã cộng ${t.qty} ${t.item} vào kho.`);
-            callGAS({ action: 'TRANSFER_ACCEPT', id: id, role: currentUser.role });
-        }
-
-        async function rejectTransfer(id) {
-            if (!confirm("Bạn chắc chắn muốn từ chối nhận VPP này? Số lượng sẽ được hoàn trả về khoa gửi.")) return;
-
-            let tIndex = pendingTransfers.findIndex(t => t.id === id);
-            if (tIndex === -1) return;
-            let t = pendingTransfers[tIndex];
-
-            t.status = 'rejected';
-            let dateStr = new Date().toLocaleDateString('vi-VN');
-            historyLog.push({ date: dateStr, type: 'TỪ CHỐI NHẬN', dept: currentUser.dept, item: t.item, qty: t.qty, note: `Từ chối nhận từ ${t.fromDept}` });
-
-            // Note: Trong môi trường Local Cache này, để khoa kia nhận lại tiền, mình sẽ phải chờ khoa kia tự load lại data từ server, 
-            // hoặc mình hoàn trả thẳng vào inventoryData nếu họ đang chung máy. Ở đây giả lập hoàn trả thẳng.
-            if (inventoryData[t.item]) {
-                addInventory(t.item, t.qty, `Hoàn trả (Bị ${t.toDept} từ chối)`);
-            }
-
-            saveToCache(); renderPendingTransfers(); updateUI();
-            callGAS({ action: 'TRANSFER_REJECT', id: id, role: currentUser.role });
-        }
-
-        // --- CÁC TÍNH NĂNG QUY ĐỔI (CONVERSION) ---
+        // --- CÁC TÍNH NĂNG QUY ĐỔI HẠN MỨC ---
         async function handleConvertItem(e) {
             e.preventDefault();
             const sourceItem = document.getElementById('convertSourceItem').value;
@@ -1323,55 +1387,76 @@
             const sourceQty = parseInt(document.getElementById('convertSourceQty').value);
             const targetQty = parseInt(document.getElementById('convertTargetQty').value);
 
+            let myDept = currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa || "";
+
             if (!sourceItem || !targetItem) return;
             if (sourceItem === targetItem) return alert("VPP gốc và đích không được trùng nhau!");
-            if (inventoryData[sourceItem].total < sourceQty) return alert("Tồn kho VPP gốc không đủ để quy đổi!");
 
-            if (!confirm(`Xác nhận quy đổi: Trừ ${sourceQty} [${sourceItem}] để lấy ${targetQty} [${targetItem}]?`)) return;
+            let remaining = getRemainingPlan(sourceItem);
+            if (remaining < sourceQty) return alert(`Lỗi: "Còn phép lãnh" của ${sourceItem} chỉ còn ${remaining}. Không đủ để quy đổi!`);
 
-            // Trừ gốc
-            deductInventoryFIFO(sourceItem, sourceQty);
-            // Cộng đích
+            if (!confirm(`Xác nhận quy đổi HẠN MỨC: Trừ ${sourceQty} [${sourceItem}] để lấy ${targetQty} [${targetItem}]?`)) return;
+
+            if (!inventoryData[targetItem]) {
+                inventoryData[targetItem] = {
+                    realItemName: targetItem, realDept: myDept, unit: 'Cái',
+                    tonDauKy: 0, plan: 0, percent: 0, total: 0, totalReceived: 0, batches: {}, transferQuota: 0
+                };
+            }
+            if (inventoryData[sourceItem].transferQuota === undefined) inventoryData[sourceItem].transferQuota = 0;
+            if (inventoryData[targetItem].transferQuota === undefined) inventoryData[targetItem].transferQuota = 0;
+
+            // Trừ/Cộng biến phụ thay vì sửa trực tiếp vào KH Gốc
+            inventoryData[sourceItem].transferQuota -= sourceQty;
+            inventoryData[targetItem].transferQuota += targetQty;
+
             let dateStr = new Date().toLocaleDateString('vi-VN');
-            addInventory(targetItem, targetQty, `Quy đổi từ ${sourceQty} ${sourceItem}`);
-
-            historyLog.push({ date: dateStr, type: 'QUY ĐỔI (TRỪ)', dept: currentUser.dept, item: sourceItem, qty: sourceQty, note: `Đổi lấy ${targetQty} ${targetItem}` });
-            historyLog.push({ date: dateStr, type: 'QUY ĐỔI (CỘNG)', dept: currentUser.dept, item: targetItem, qty: targetQty, note: `Quy đổi từ ${sourceQty} ${sourceItem}` });
+            historyLog.push({ date: dateStr, type: 'QUY ĐỔI HẠN MỨC (-)', dept: myDept, item: sourceItem, qty: sourceQty, note: `Đổi hạn mức lấy ${targetQty} ${targetItem}` });
+            historyLog.push({ date: dateStr, type: 'QUY ĐỔI HẠN MỨC (+)', dept: myDept, item: targetItem, qty: targetQty, note: `Quy đổi hạn mức từ ${sourceQty} ${sourceItem}` });
 
             saveToCache(); updateUI(); document.getElementById('form-convert').reset();
-            alert("Quy đổi thành công!");
+            alert("Quy đổi hạn mức thành công!");
 
-            callGAS({ action: 'CONVERT_ITEM', sourceItem, targetItem, sourceQty, targetQty, dept: currentUser.dept, role: currentUser.role });
+            callGAS({ action: 'CONVERT_QUOTA', sourceItem, targetItem, sourceQty, targetQty, dept: myDept, role: currentUser.role });
         }
 
 
         // --- UPDATE UI OPTIONS (SELECT BOXES) ---
         function updateUI() {
-            // Select my items
+            let myDept = currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa || "";
+
+            // Danh sách VPP của bản thân (Kèm thông tin Tồn + Phép Lãnh)
             const selects = document.querySelectorAll('.item-select-options');
             let optionsHtml = '<option value="">-- Chọn VPP --</option>';
             let sortedItems = Object.keys(inventoryData).sort();
             sortedItems.forEach(itemName => {
-                optionsHtml += `<option value="${itemName}">${itemName} (Tồn: ${inventoryData[itemName].total} ${inventoryData[itemName].unit || ''})</option>`;
+                let d = inventoryData[itemName];
+                let remain = getRemainingPlan(itemName);
+                optionsHtml += `<option value="${itemName}">${itemName} (Tồn: ${d.total}, Phép lãnh: ${remain})</option>`;
             });
             selects.forEach(select => select.innerHTML = optionsHtml);
 
-            // Select ALL known items (for convert target)
-            const convertTarget = document.getElementById('convertTargetItem');
-            if (convertTarget) {
-                let allItemsHtml = '<option value="">-- Chọn VPP Đích --</option>';
-                Array.from(allKnownItems).sort().forEach(item => {
-                    allItemsHtml += `<option value="${item}">${item}</option>`;
-                });
-                convertTarget.innerHTML = allItemsHtml;
-            }
+            // Danh sách Toàn Bộ VPP của viện (Dùng cho đích đến và điều chuyển)
+            const selectsAll = document.querySelectorAll('.item-select-options-all');
+            let allItemsHtml = '<option value="">-- Chọn VPP --</option>';
+            Array.from(allKnownItems).sort().forEach(item => {
+                if (item && item.trim() !== '') {
+                    let d = inventoryData[item];
+                    let remain = getRemainingPlan(item);
+                    let ton = d ? d.total : 0;
+                    allItemsHtml += `<option value="${item}">${item} (Tồn: ${ton}, Phép lãnh: ${remain})</option>`;
+                }
+            });
+            selectsAll.forEach(select => select.innerHTML = allItemsHtml);
 
             // Select Target Dept
             const targetDeptSelect = document.getElementById('transferTargetDept');
             if (targetDeptSelect) {
-                let deptsHtml = '<option value="">-- Chọn Khoa nhận --</option>';
+                let deptsHtml = '<option value="">-- Chọn Khoa/Phòng đối tác --</option>';
                 Array.from(allKnownDepts).sort().forEach(dept => {
-                    if (dept !== currentUser.dept) deptsHtml += `<option value="${dept}">${dept}</option>`;
+                    if (dept && dept.trim() !== '' && dept !== myDept) {
+                        deptsHtml += `<option value="${dept}">${dept}</option>`;
+                    }
                 });
                 targetDeptSelect.innerHTML = deptsHtml;
             }
@@ -1386,13 +1471,15 @@
             const unit = document.getElementById('newItemUnit').value.trim();
             const plan = parseInt(document.getElementById('newItemPlan').value);
 
+            let myDept = currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa || "";
+
             if (inventoryData[name]) return alert("Vật phẩm này đã tồn tại! Vui lòng cập nhật ở danh sách bên trên.");
 
-            const res = await callGAS({ action: 'ADD_ITEM', name: name, unit: unit, plan: plan, dept: currentUser.dept, role: currentUser.role });
+            const res = await callGAS({ action: 'ADD_ITEM', name: name, unit: unit, plan: plan, dept: myDept, role: currentUser.role });
 
             if (res.status === 'success' || true) {
                 document.getElementById('form-add-new-item').reset();
-                inventoryData[name] = { realItemName: name, realDept: currentUser.dept, unit: unit, tonDauKy: 0, plan: plan, percent: 0, total: 0, totalReceived: 0, batches: {} };
+                inventoryData[name] = { realItemName: name, realDept: myDept, unit: unit, tonDauKy: 0, plan: plan, percent: 0, total: 0, totalReceived: 0, batches: {}, transferQuota: 0 };
                 extractMetadata(); saveToCache(); updateUI(); renderPlanExistingItems();
                 alert(`Đã thêm VPP mới: ${name}`);
             }
@@ -1411,12 +1498,12 @@
 
             let tgian = fDate.split("-").reverse().join("/") + " - " + tDate.split("-").reverse().join("/");
             let data = inventoryData[item];
-            let totalPlan = Math.round(data.plan + (data.plan * data.percent / 100));
-            let remainingPlan = totalPlan - data.totalReceived;
+            let remainingPlan = getRemainingPlan(item);
+            let myDept = currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa || "";
 
             if (qty > remainingPlan) return alert(`Lỗi: Vượt quá Kế hoạch!\nKhoản còn được phép lãnh tối đa là: ${remainingPlan} ${data.unit}`);
 
-            const res = await callGAS({ action: 'RECEIVE_BATCH', item: item, goi: goi, dot: dot, thoigian: tgian, qty: qty, date: date, dept: currentUser.dept, role: currentUser.role });
+            const res = await callGAS({ action: 'RECEIVE_BATCH', item: item, goi: goi, dot: dot, thoigian: tgian, qty: qty, date: date, dept: myDept, role: currentUser.role });
 
             if (res.status === 'success' || true) {
                 document.getElementById('recvQty').value = '';
@@ -1424,7 +1511,7 @@
                 inventoryData[item].totalReceived += qty;
                 inventoryData[item].total += qty;
                 inventoryData[item].batches[batchName] = (inventoryData[item].batches[batchName] || 0) + qty;
-                historyLog.push({ date: date, type: 'LÃNH VPP', dept: currentUser.dept, item: item, qty: qty, note: `Lãnh Gói ${goi}-Đợt ${dot} (${tgian})` });
+                historyLog.push({ date: date, type: 'LÃNH VPP', dept: myDept, item: item, qty: qty, note: `Lãnh Gói ${goi}-Đợt ${dot} (${tgian})` });
 
                 saveToCache(); updateUI();
                 alert(`Thành công! Lãnh ${qty} ${data.unit} ${item} vào kho.`);
@@ -1440,9 +1527,11 @@
             if (!item) return;
 
             let inv = inventoryData[item];
-            if (inv.total < qtyToUse) return alert("Tồn kho không đủ để xuất!");
+            if (inv.total < qtyToUse) return alert("Tồn kho thực tế không đủ để xuất!");
 
-            const res = await callGAS({ action: 'USE_ITEM', item: item, dept: currentUser.dept, qty: qtyToUse, date: date, role: currentUser.role });
+            let myDept = currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa || "";
+
+            const res = await callGAS({ action: 'USE_ITEM', item: item, dept: myDept, qty: qtyToUse, date: date, role: currentUser.role });
 
             if (res.status === 'success' || true) {
                 const resDiv = document.getElementById('use-result');
@@ -1451,7 +1540,7 @@
                 document.getElementById('useQty').value = '';
 
                 deductInventoryFIFO(item, qtyToUse);
-                historyLog.push({ date: date, type: 'SỬ DỤNG', dept: currentUser.dept, item: item, qty: qtyToUse, note: 'Xuất sử dụng nội bộ' });
+                historyLog.push({ date: date, type: 'SỬ DỤNG', dept: myDept, item: item, qty: qtyToUse, note: 'Xuất sử dụng nội bộ' });
 
                 saveToCache(); updateUI();
             }
@@ -1463,25 +1552,27 @@
             tbody.innerHTML = '';
             for (let item in inventoryData) {
                 let data = inventoryData[item];
+                let deptName = data.realDept || currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa || "";
+                let transferQ = data.transferQuota || 0;
                 tbody.innerHTML += `
-                <tr class="border-b hover:bg-gray-50" data-item="${item}" data-dept="${data.realDept || currentUser.dept}">
+                <tr class="border-b hover:bg-gray-50" data-item="${item}" data-dept="${deptName}" data-tq="${transferQ}">
                     <td class="py-2.5 px-4 font-medium">${item}</td>
                     <td class="py-2.5 px-4 text-center font-bold text-gray-600">${data.plan}</td>
                     <td class="py-2.5 px-4 text-center">
                         <div class="flex items-center justify-center">
-                            <input type="number" class="w-16 p-1 border rounded text-center focus:ring-blue-500 percent-input text-sm" value="${data.percent}" onchange="previewNewPlan(this, ${data.plan})">
+                            <input type="number" class="w-16 p-1 border rounded text-center focus:ring-blue-500 percent-input text-sm" value="${data.percent}" onchange="previewNewPlan(this, ${data.plan}, ${transferQ})">
                             <span class="ml-1 font-bold text-gray-500">%</span>
                         </div>
                     </td>
-                    <td class="py-2.5 px-4 text-center font-black text-blue-700 preview-total">${Math.round(data.plan + (data.plan * data.percent / 100))}</td>
+                    <td class="py-2.5 px-4 text-center font-black text-blue-700 preview-total">${Math.round(data.plan + (data.plan * data.percent / 100)) + transferQ}</td>
                 </tr>`;
             }
             document.getElementById('modal-vuot-ke-hoach').classList.remove('hidden');
         }
 
-        function previewNewPlan(inputEl, basePlan) {
+        function previewNewPlan(inputEl, basePlan, transferQ) {
             let pct = parseFloat(inputEl.value) || 0;
-            let newTotal = Math.round(basePlan + (basePlan * pct / 100));
+            let newTotal = Math.round(basePlan + (basePlan * pct / 100)) + transferQ;
             inputEl.closest('tr').querySelector('.preview-total').innerText = newTotal;
         }
 
@@ -1541,9 +1632,11 @@
 
         function populatePeriods() {
             let periods = new Set();
+            let myDept = currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa || "";
+
             historyLog.forEach(log => {
                 if (log.type === 'CHỐT THẦU' && log.note.includes('Tồn Đầu Kỳ')) {
-                    if (currentUser.role !== 'admin' && log.dept !== currentUser.dept) return;
+                    if (currentUser.role !== 'admin' && log.dept !== myDept) return;
                     let match = log.note.match(/Tồn Đầu Kỳ (.*?)$/);
                     if (match) periods.add(match[1]);
                 }
@@ -1567,7 +1660,7 @@
             let fromDate = document.getElementById('filterFrom').value;
             let toDate = document.getElementById('filterTo').value;
 
-            let sortedLog = [...historyLog].sort((a, b) => new Date(b.date) - new Date(a.date));
+            let sortedLog = [...historyLog].sort((a, b) => new Date(b.date.split('/').reverse().join('-')) - new Date(a.date.split('/').reverse().join('-')));
             let filteredLog = sortedLog.filter(log => {
                 if (fromDate && log.date < fromDate) return false;
                 if (toDate && log.date > toDate) return false;
@@ -1581,7 +1674,7 @@
             filteredLog.forEach(log => {
                 let typeColor = 'text-blue-600 bg-blue-100';
                 let icon = 'fa-plus';
-                if (log.type.includes('SỬ DỤNG') || log.type.includes('ĐIỀU CHUYỂN GỬI') || log.type.includes('TRỪ')) {
+                if (log.type.includes('SỬ DỤNG') || log.type.includes('ĐIỀU CHUYỂN') || log.type.includes('TRỪ') || log.type.includes('(-)')) {
                     typeColor = 'text-red-600 bg-red-100'; icon = 'fa-minus';
                 }
 
@@ -1599,11 +1692,12 @@
         function generateClosedReport() {
             const tbody = document.getElementById('report-closed-tbody');
             let selectedPeriod = document.getElementById('filterPeriod').value;
+            let myDept = currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa || "";
 
-            let sortedLog = [...historyLog].sort((a, b) => new Date(b.date) - new Date(a.date));
+            let sortedLog = [...historyLog].sort((a, b) => new Date(b.date.split('/').reverse().join('-')) - new Date(a.date.split('/').reverse().join('-')));
             let filteredLog = sortedLog.filter(log => {
                 if (log.type !== 'CHỐT THẦU') return false;
-                if (currentUser.role !== 'admin' && log.dept !== currentUser.dept) return false;
+                if (currentUser.role !== 'admin' && log.dept !== myDept) return false;
                 if (selectedPeriod && !log.note.includes('Tồn Đầu Kỳ ' + selectedPeriod)) return false;
                 if (log.item === 'HỆ THỐNG KHOA' || log.item === 'HỆ THỐNG') return false;
                 return true;
@@ -1635,14 +1729,15 @@
                 const tbody = document.getElementById('accounts-tbody'); tbody.innerHTML = '';
                 res.accounts.forEach(acc => {
                     let roleColor = acc.role === 'admin' ? 'text-red-600 font-bold bg-red-50' : 'text-blue-600 bg-blue-50';
+                    let dName = acc.dept || acc.TenKhoa || acc.tenKhoa || '';
                     tbody.innerHTML += `
                     <tr class="hover:bg-gray-50 transition">
                         <td class="py-2.5 px-4 border-b font-bold text-gray-700">${acc.username}</td>
                         <td class="py-2.5 px-4 border-b text-gray-600">${acc.name}</td>
-                        <td class="py-2.5 px-4 border-b text-gray-600">${acc.dept}</td>
+                        <td class="py-2.5 px-4 border-b text-gray-600">${dName}</td>
                         <td class="py-2.5 px-4 border-b text-center"><span class="px-2 py-1 rounded text-xs ${roleColor}">${acc.role.toUpperCase()}</span></td>
                         <td class="py-2.5 px-4 border-b text-center space-x-2">
-                            <button onclick="openEditAccount('${acc.username}', '${acc.name}', '${acc.dept}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded" title="Sửa"><i class="fas fa-edit"></i></button>
+                            <button onclick="openEditAccount('${acc.username}', '${acc.name}', '${dName}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded" title="Sửa"><i class="fas fa-edit"></i></button>
                             ${acc.username !== currentUser.username ? `<button onclick="deleteAccount('${acc.username}')" class="text-red-500 hover:text-red-700 bg-red-50 p-1.5 rounded" title="Xóa"><i class="fas fa-trash"></i></button>` : ''}
                         </td>
                     </tr>`;
@@ -1690,7 +1785,9 @@
             if (res.status === 'success' || true) {
                 alert("Cập nhật thành công!"); document.getElementById('myPassword').value = '';
                 currentUser.name = newName; localStorage.setItem('vpp_current_user', JSON.stringify(currentUser));
-                document.getElementById('header-user-name').innerText = currentUser.name; document.getElementById('useDept').value = `${currentUser.dept} (${currentUser.name})`;
+                document.getElementById('header-user-name').innerText = currentUser.name;
+                let myDept = currentUser.dept || currentUser.TenKhoa || currentUser.tenKhoa || "";
+                document.getElementById('useDept').value = `${myDept} (${currentUser.name})`;
             }
         }
 
